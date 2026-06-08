@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './utils/db.js';
 import { startDeadlineMonitor } from './agents/deadlineMonitor.js';
 import mcpClient from './mcp/mcpClient.js';
+import { verifyToken } from './middleware/auth.js';
 
 // Routes
 import applicationRoutes  from './routes/applications.js';
@@ -43,12 +44,12 @@ app.get('/api/health', (req, res) => {
 app.use('/mcp',      mcpRoutes);      // POST /mcp  (MCP protocol)
 app.use('/api/mcp',  mcpRoutes);      // GET  /api/mcp/tools (manifest)
 
-// ── REST API Routes ───────────────────────────────────────────────────────────
-app.use('/api/applications',  applicationRoutes);
-app.use('/api/resume',        resumeRoutes);
-app.use('/api/agent',         agentRoutes);
-app.use('/api/profile',       profileRoutes);
-app.use('/api/notifications', notificationRoutes);
+// ── REST API Routes (protected with Firebase auth) ──────────────────────────
+app.use('/api/applications',  verifyToken, applicationRoutes);
+app.use('/api/resume',        verifyToken, resumeRoutes);
+app.use('/api/agent',         verifyToken, agentRoutes);
+app.use('/api/profile',       verifyToken, profileRoutes);
+app.use('/api/notifications', verifyToken, notificationRoutes);
 
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
