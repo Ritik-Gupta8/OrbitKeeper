@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Briefcase, MessageSquare, User,
-  ChevronLeft, ChevronRight, Sparkles, Bell
+  ChevronLeft, ChevronRight, Sparkles, Bell, LogOut
 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { logOut } from '../lib/firebase.js';
 
 const navItems = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,6 +17,17 @@ const navItems = [
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-zinc-950 overflow-hidden">
@@ -71,10 +84,33 @@ export default function Layout() {
         {/* Topbar */}
         <header className="h-14 bg-zinc-900/50 border-b border-zinc-800 flex items-center justify-between px-6 flex-shrink-0">
           <TopbarTitle />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors">
               <Bell size={14} className="text-zinc-400" />
             </button>
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg">
+                  {user.photoURL && (
+                    <img
+                      src={user.photoURL}
+                      alt={user.displayName}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <span className="text-xs text-zinc-300 max-w-[120px] truncate">
+                    {user.displayName || user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-red-600 flex items-center justify-center transition-colors group"
+                  title="Logout"
+                >
+                  <LogOut size={14} className="text-zinc-400 group-hover:text-white" />
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
