@@ -1,11 +1,22 @@
 import axios from 'axios';
+import { auth } from './firebase.js';
 
 const api = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
-    'x-user-id': 'default',
   },
+});
+
+// Add auth token to every request
+api.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
+    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['x-user-id'] = user.uid;
+  }
+  return config;
 });
 
 // Applications
