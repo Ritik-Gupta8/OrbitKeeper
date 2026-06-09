@@ -6,16 +6,19 @@
  *
  * MCP tools used:
  *   - get_upcoming_deadlines   (find apps nearing deadline)
- *   - get_profile              (get user email)
+ *   - get_profile              (get user email from Firebase auth)
  *   - mark_reminder_sent       (prevent duplicate sends)
  *   - log_notification         (audit trail in MongoDB)
  *
  * Reminder rules:
  *   - 24h reminder: when deadline is ≤ 24h away (and not yet sent)
  *   - 12h reminder: when deadline is ≤ 12h away (and not yet sent)
+ *
+ * Email: Sends to user's Google account email (from Firebase Authentication)
  */
 
 import cron from 'node-cron';
+import admin from 'firebase-admin';
 import mcpClient from '../mcp/mcpClient.js';
 import { sendDeadlineReminder } from '../utils/emailer.js';
 
@@ -33,18 +36,24 @@ const checkAndSendReminders = async () => {
       return;
     }
 
-    // ── MCP Tool: get_profile — fetch user email ──────────────────────────────
-    const profileResult = await mcpClient.callTool('get_profile', { userId: 'default' });
-    const userEmail     = profileResult.profile?.email;
-
-    if (!userEmail) {
-      console.log('[DeadlineMonitor] No user email set. Add email in Profile to receive reminders.');
-      return;
-    }
-
     const now = new Date();
 
     for (const app of deadlineResult.applications) {
+      // ── Get user email from Firebase Authentication ────────────────────────
+      let userEmail = null;
+      try {
+        const userRecord = await admin.auth().getUser(app.userId);
+        userEmail = userRecord.email;
+      } catch (err) {
+        console.log(`[DeadlineMonitor] Could not fetch user email for userId: ${app.userId}`);
+        continue;
+      }
+
+      if (!userEmail) {
+        console.log(`[DeadlineMonitor] No email found for user: ${app.userId}`);
+        continue;
+      }
+
       const deadline           = new Date(app.deadline);
       const hoursUntilDeadline = (deadline - now) / (1000 * 60 * 60);
 
@@ -64,7 +73,7 @@ const checkAndSendReminders = async () => {
 };
 
 const triggerReminder = async (app, type, remainingTime, userEmail) => {
-  console.log(`[DeadlineMonitor] 📧 Sending ${type} reminder for ${app.company} — ${app.role}`);
+  console.log(`[DeadlineMonitor] 📧 Sending ${type} reminder to ${userEmail} for ${app.company} — ${app.role}`);
 
   try {
     // Send email
@@ -96,7 +105,7 @@ const triggerReminder = async (app, type, remainingTime, userEmail) => {
       },
     });
 
-    console.log(`[DeadlineMonitor] ✅ ${type} reminder sent for ${app.company}`);
+    console.log(`[DeadlineMonitor] ✅ ${type} reminder sent to ${userEmail} for ${app.company}`);
   } catch (error) {
     console.error(`[DeadlineMonitor] ❌ Failed to send ${type} reminder for ${app.company}:`, error.message);
 
