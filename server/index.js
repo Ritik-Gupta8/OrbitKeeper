@@ -37,6 +37,65 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ── Debug endpoints (temporary - for testing) ─────────────────────────────────
+app.get('/api/debug/check-deadlines', async (req, res) => {
+  try {
+    const Application = (await import('./models/Application.js')).default;
+    const now = new Date();
+    const future = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    
+    const allApps = await Application.find({}).select('company role deadline userId status createdAt');
+    const upcomingApps = await Application.find({
+      deadline: { $gte: now, $lte: future },
+      status: { $nin: ['rejected', 'withdrawn', 'offer'] },
+    }).select('company role deadline userId status');
+    
+    res.json({
+      now: now.toISOString(),
+      future: future.toISOString(),
+      hoursAhead: 25,
+      allApplications: allApps.map(a => ({
+        company: a.company,
+        role: a.role,
+        deadline: a.deadline,
+        deadlineISO: a.deadline ? new Date(a.deadline).toISOString() : null,
+        hoursUntil: a.deadline ? ((new Date(a.deadline) - now) / (1000 * 60 * 60)).toFixed(1) : null,
+        userId: a.userId,
+        status: a.status,
+      })),
+      upcomingDeadlines: upcomingApps.map(a => ({
+        company: a.company,
+        role: a.role,
+        deadline: a.deadline,
+        userId: a.userId,
+        hoursUntil: ((new Date(a.deadline) - now) / (1000 * 60 * 60)).toFixed(1),
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/debug/profile', verifyToken, async (req, res) => {
+  try {
+    const Profile = (await import('./models/Profile.js')).default;
+    const userId = req.headers['x-user-id'];
+    const profile = await Profile.findOne({ userId });
+    
+    res.json({
+      userId,
+      profileExists: !!profile,
+      resumeTextLength: profile?.resumeText?.length || 0,
+      resumeFileName: profile?.resumeFileName || null,
+      resumeUploadedAt: profile?.resumeUploadedAt || null,
+      skillsCount: profile?.skills?.length || 0,
+      name: profile?.name || null,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ── MCP Server endpoint (must come before other routes, no /api prefix) ──────
 // Judges verify MCP integration at:
 //   POST /mcp         — MCP protocol endpoint
