@@ -116,12 +116,13 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: 'get_upcoming_deadlines',
-    description: 'Retrieve applications with deadlines approaching within N hours. Used by the Deadline Monitoring Agent.',
+    description: 'Retrieve applications with deadlines approaching within N hours. Used by the Deadline Monitoring Agent. Optionally filter by userId for multi-user support.',
     schema: {
       hoursAhead: z.number().int().min(1).max(168).optional().default(25).describe('Hours ahead to look'),
+      userId:     z.string().optional().describe('Filter by user ID (optional)'),
     },
-    handler: ({ hoursAhead }) =>
-      handle_get_upcoming_deadlines({ hoursAhead }),
+    handler: ({ hoursAhead, userId }) =>
+      handle_get_upcoming_deadlines({ hoursAhead, userId }),
   },
   {
     name: 'get_dashboard_stats',
