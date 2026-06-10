@@ -22,19 +22,22 @@ import admin from 'firebase-admin';
 import mcpClient from '../mcp/mcpClient.js';
 import { sendDeadlineReminder } from '../utils/emailer.js';
 
-const MONITOR_INTERVAL = '*/30 * * * *'; // Every 30 minutes
+const MONITOR_INTERVAL = '*/2 * * * *'; // Every 30 minutes
 
 const checkAndSendReminders = async () => {
   console.log(`[DeadlineMonitor] 🔍 Checking deadlines at ${new Date().toISOString()}`);
 
   try {
-    // ── MCP Tool: get_upcoming_deadlines ─────────────────────────────────────
-    const deadlineResult = await mcpClient.callTool('get_upcoming_deadlines', { hoursAhead: 25 });
+    // ── MCP Tool: get_upcoming_deadlines (check ALL users) ────────────────
+    // Check 30 hours ahead to catch deadlines set to midnight tomorrow
+    const deadlineResult = await mcpClient.callTool('get_upcoming_deadlines', { hoursAhead: 30 });
 
     if (!deadlineResult.count || deadlineResult.count === 0) {
       console.log('[DeadlineMonitor] No upcoming deadlines found.');
       return;
     }
+
+    console.log(`[DeadlineMonitor] Found ${deadlineResult.count} application(s) with upcoming deadlines`);
 
     const now = new Date();
 
@@ -57,14 +60,23 @@ const checkAndSendReminders = async () => {
       const deadline           = new Date(app.deadline);
       const hoursUntilDeadline = (deadline - now) / (1000 * 60 * 60);
 
-      // ── 24-Hour Reminder ───────────────────────────────────────────────────
-      if (hoursUntilDeadline <= 24 && hoursUntilDeadline > 11 && !app.reminder24hSent) {
+      console.log(`[DeadlineMonitor] ${app.company} - ${app.role}: ${hoursUntilDeadline.toFixed(1)}h until deadline`);
+      console.log(`[DeadlineMonitor]   → reminder24hSent: ${app.reminder24hSent}, reminder12hSent: ${app.reminder12hSent}`);
+
+      // ── 24-Hour Reminder (20-24 hours before deadline) ────────────────────
+      if (hoursUntilDeadline <= 24 && hoursUntilDeadline > 20 && !app.reminder24hSent) {
+        console.log(`[DeadlineMonitor]   → ✅ Triggering 24h reminder (${hoursUntilDeadline.toFixed(1)}h remaining)`);
         await triggerReminder(app, '24h', '24 Hours', userEmail);
+      } else if (hoursUntilDeadline <= 24 && hoursUntilDeadline > 20) {
+        console.log(`[DeadlineMonitor]   → ⏭️  Skipping 24h reminder (already sent)`);
       }
 
-      // ── 12-Hour Reminder ───────────────────────────────────────────────────
-      if (hoursUntilDeadline <= 12 && hoursUntilDeadline > 0 && !app.reminder12hSent) {
+      // ── 12-Hour Reminder (10-12 hours before deadline) ────────────────────
+      if (hoursUntilDeadline <= 12 && hoursUntilDeadline > 10 && !app.reminder12hSent) {
+        console.log(`[DeadlineMonitor]   → ✅ Triggering 12h reminder (${hoursUntilDeadline.toFixed(1)}h remaining)`);
         await triggerReminder(app, '12h', '12 Hours', userEmail);
+      } else if (hoursUntilDeadline <= 12 && hoursUntilDeadline > 10) {
+        console.log(`[DeadlineMonitor]   → ⏭️  Skipping 12h reminder (already sent)`);
       }
     }
   } catch (error) {
@@ -76,8 +88,8 @@ const triggerReminder = async (app, type, remainingTime, userEmail) => {
   console.log(`[DeadlineMonitor] 📧 Sending ${type} reminder to ${userEmail} for ${app.company} — ${app.role}`);
 
   try {
-    // Send email
-    await sendDeadlineReminder({
+    // Send email (or skip if not configured)
+    const emailResult = await sendDeadlineReminder({
       to:            userEmail,
       company:       app.company,
       role:          app.role,
@@ -85,6 +97,13 @@ const triggerReminder = async (app, type, remainingTime, userEmail) => {
       remainingTime,
       applicationId: app._id,
     });
+
+    // If email was skipped (not configured), still mark as sent to avoid spam
+    const emailStatus = emailResult?.skipped ? 'skipped' : 'sent';
+    
+    if (emailResult?.skipped) {
+      console.log(`[DeadlineMonitor] ⚠️  Email skipped (not configured)`);
+    }
 
     // ── MCP Tool: mark_reminder_sent ─────────────────────────────────────────
     await mcpClient.callTool('mark_reminder_sent', {
@@ -101,11 +120,11 @@ const triggerReminder = async (app, type, remainingTime, userEmail) => {
         notificationType: type === '24h' ? '24_hour_reminder' : '12_hour_reminder',
         channel:          'email',
         sentTo:           userEmail,
-        status:           'sent',
+        status:           emailStatus,
       },
     });
 
-    console.log(`[DeadlineMonitor] ✅ ${type} reminder sent to ${userEmail} for ${app.company}`);
+    console.log(`[DeadlineMonitor] ✅ ${type} reminder logged for ${app.company}`);
   } catch (error) {
     console.error(`[DeadlineMonitor] ❌ Failed to send ${type} reminder for ${app.company}:`, error.message);
 
