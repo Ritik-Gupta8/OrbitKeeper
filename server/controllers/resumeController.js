@@ -1,7 +1,7 @@
 import multer from 'multer';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { extractResumeInfo } from '../agents/resumeAnalysisAgent.js';
-import { updateProfile } from '../mcp/mongoMCP.js';
+import mcpClient from '../mcp/mcpClient.js';
 
 // Use memory storage (no disk needed)
 const storage = multer.memoryStorage();
@@ -39,7 +39,11 @@ export const uploadResume = async (req, res) => {
     // Use AI agent to extract structured info
     const extracted = await extractResumeInfo(resumeText);
 
-    // Store via MCP
+    console.log(`[ResumeUpload] Uploading for userId: ${userId}`);
+    console.log(`[ResumeUpload] Resume text length: ${resumeText.length}`);
+    console.log(`[ResumeUpload] Extracted skills: ${extracted.skills?.length || 0}`);
+
+    // Store via MCP Client (not legacy mongoMCP)
     const profileUpdates = {
       resumeText,
       resumeFileName: req.file.originalname,
@@ -55,7 +59,13 @@ export const uploadResume = async (req, res) => {
       ...(extracted.email && { email: extracted.email }),
     };
 
-    await updateProfile(userId, profileUpdates);
+    await mcpClient.callTool('update_profile', { userId, updates: profileUpdates });
+
+    console.log(`[ResumeUpload] ✅ Profile updated via MCP for userId: ${userId}`);
+
+    // Verify the write by reading back immediately
+    const verifyResult = await mcpClient.callTool('get_profile', { userId });
+    console.log(`[ResumeUpload] Verification read - Resume text length: ${verifyResult.profile?.resumeText?.length || 0}`);
 
     res.json({
       success: true,
