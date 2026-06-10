@@ -88,13 +88,40 @@ export const generateJSON = async (prompt, modelName = DEFAULT_MODEL) => {
     const text = (result.text || result.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
 
     // Strip markdown code blocks if Gemini adds them anyway
-    const cleaned = text
+    let cleaned = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
 
-    return JSON.parse(cleaned);
+    try {
+      return JSON.parse(cleaned);
+    } catch (parseError) {
+      // Attempt to fix common JSON issues
+      console.log('[Gemini] JSON parse failed, attempting repair...');
+      
+      // Fix unquoted property names (common issue)
+      cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+      
+      // Fix trailing commas
+      cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+      
+      // Remove any trailing incomplete JSON
+      const lastValidBrace = Math.max(
+        cleaned.lastIndexOf('}'),
+        cleaned.lastIndexOf(']')
+      );
+      if (lastValidBrace > 0) {
+        cleaned = cleaned.substring(0, lastValidBrace + 1);
+      }
+      
+      try {
+        return JSON.parse(cleaned);
+      } catch (secondError) {
+        console.error('[Gemini] JSON repair failed. Original text:', text.substring(0, 500));
+        throw new Error(`Failed to parse Gemini response as JSON: ${secondError.message}`);
+      }
+    }
   });
 };
 
