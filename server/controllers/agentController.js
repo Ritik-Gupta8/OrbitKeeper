@@ -42,6 +42,13 @@ export const runFullAnalysis = async (req, res) => {
     const profileResult = await mcpClient.callTool('get_profile', { userId });
     const resumeText    = profileResult.profile?.resumeText || '';
 
+    console.log(`[AgentController] Profile found for userId: ${userId}`);
+    console.log(`[AgentController] Resume text length: ${resumeText.length}`);
+
+    if (!resumeText) {
+      console.log(`[AgentController] ⚠️  No resume found! Upload resume first.`);
+    }
+
     console.log(`[AgentController] Running full analysis for ${app.company} — ${app.role}`);
 
     // ── Gemini Agents ──────────────────────────────────────────────────────
@@ -49,9 +56,11 @@ export const runFullAnalysis = async (req, res) => {
     console.log(`[Agent] Job analysis done. Skills: ${jobSummary.requiredSkills?.join(', ')}`);
 
     let resumeAnalysis = null;
-    if (resumeText) {
+    if (resumeText && resumeText.length > 10) {
       resumeAnalysis = await analyzeResumeAgainstJob(resumeText, app.jobDescription, jobSummary);
       console.log(`[Agent] Resume analysis done. Score: ${resumeAnalysis.matchScore}`);
+    } else {
+      console.log(`[Agent] ⚠️  Skipping resume analysis - no resume text (length: ${resumeText.length})`);
     }
 
     const careerPlan = await generateCareerPlan({
