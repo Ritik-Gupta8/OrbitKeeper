@@ -5,16 +5,28 @@ dotenv.config();
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
+    // Handle different private key formats
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    
+    // Remove surrounding quotes if present
+    if (privateKey?.startsWith('"') && privateKey?.endsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    
+    // Replace literal \n with actual newlines
+    privateKey = privateKey?.replace(/\\n/g, '\n');
+    
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        privateKey: privateKey,
       }),
     });
     console.log('✅ Firebase Admin initialized');
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error.message);
+    console.error('Private key preview:', process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50) + '...');
   }
 }
 
