@@ -2,18 +2,33 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Check if email is configured
+const isEmailConfigured = process.env.EMAIL_USER && process.env.EMAIL_PASS && 
+  process.env.EMAIL_USER !== 'your_gmail@gmail.com';
+
+let transporter = null;
+if (isEmailConfigured) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+  console.log('✉️  Email notifications enabled');
+} else {
+  console.log('⚠️  Email notifications disabled (EMAIL_USER/EMAIL_PASS not configured)');
+}
 
 /**
  * Send a deadline reminder email
  */
 export const sendDeadlineReminder = async ({ to, company, role, deadline, remainingTime, applicationId }) => {
+  if (!transporter) {
+    console.log(`[Email] Skipped (not configured): ${company} — ${role} to ${to}`);
+    return { skipped: true, reason: 'Email not configured' };
+  }
+  
   const deadlineFormatted = new Date(deadline).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
