@@ -1,14 +1,21 @@
-import { getProfile, updateProfile } from '../mcp/mongoMCP.js';
+import mcpClient from '../mcp/mcpClient.js';
 
 export const get = async (req, res) => {
-  const userId = req.headers['x-user-id'] || 'default';
-  const result = await getProfile(userId);
-  res.json(result);
+  try {
+    const userId = req.headers['x-user-id'] || 'default';
+    const result = await mcpClient.callTool('get_profile', { userId });
+    res.json({ success: true, data: result.profile });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 export const update = async (req, res) => {
-  const userId = req.headers['x-user-id'] || 'default';
-  const result = await updateProfile(userId, req.body);
-  if (!result.success) return res.status(400).json(result);
-  res.json(result);
+  try {
+    const userId = req.headers['x-user-id'] || 'default';
+    const result = await mcpClient.callTool('update_profile', { userId, updates: req.body });
+    res.json({ success: true, data: result.profile });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
