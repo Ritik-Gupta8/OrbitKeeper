@@ -10,6 +10,13 @@
 
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const PROJECT  = process.env.GOOGLE_CLOUD_PROJECT;
@@ -17,6 +24,18 @@ const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // gemini-2.5-flash works on new GCP projects (2.0/1.5 removed for new projects)
 const DEFAULT_MODEL = process.env.GOOGLE_CLOUD_MODEL || 'gemini-2.5-flash';
+
+// Handle credentials from JSON string (for Render deployment)
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  try {
+    const credentialsPath = path.join(__dirname, '../.temp-service-account.json');
+    fs.writeFileSync(credentialsPath, process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+    console.log('✅ Google credentials loaded from JSON environment variable');
+  } catch (error) {
+    console.error('❌ Failed to write credentials file:', error.message);
+  }
+}
 
 let _ai = null;
 
