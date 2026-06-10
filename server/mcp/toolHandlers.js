@@ -97,13 +97,25 @@ export async function handle_store_ai_analysis({ applicationId, analysis }) {
   return { stored: true, application: toObj(app) };
 }
 
-export async function handle_get_upcoming_deadlines({ hoursAhead = 25 }) {
+export async function handle_get_upcoming_deadlines({ hoursAhead = 25, userId }) {
   const now    = new Date();
   const future = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
-  const apps   = await Application.find({
+  
+  const filter = {
     deadline: { $gte: now, $lte: future },
-    status:   { $nin: ['rejected', 'withdrawn', 'offer'] },
-  });
+    // Only send reminders for applications that need to be submitted
+    // Include: saved (not applied yet)
+    // Exclude: applied, phone_screen, technical, interview, offer, rejected, withdrawn
+    status: 'saved',
+  };
+  
+  // Filter by userId if provided (for multi-user support)
+  if (userId) {
+    filter.userId = userId;
+  }
+  
+  // Use lean() to bypass Mongoose caching and get fresh data
+  const apps = await Application.find(filter).lean().read('primary');
   return { applications: apps.map(toObj), count: apps.length };
 }
 
@@ -145,17 +157,56 @@ export async function handle_log_notification({ data }) {
 }
 
 export async function handle_get_profile({ userId = 'default' }) {
+  // Use findOne with retry logic to handle MongoDB replication lag
   let profile = await Profile.findOne({ userId });
-  if (!profile) { profile = new Profile({ userId }); await profile.save(); }
+  
+  // Retry up to 3 times with increasing delays if resume text is missing/empty
+  let retries = 0;
+  while ((!profile || !profile.resumeText || profile.resumeText.length === 0) && retries < 3) {
+    const delay = 200 * (retries + 1); // 200ms, 400ms, 600ms
+    console.log(`[MCP:get_profile] Retry ${retries + 1}/3 after ${delay}ms for userId: ${userId}`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    profile = await Profile.findOne({ userId });
+    retries++;
+  }
+  
+  // If still not found, create new empty profile
+  if (!profile) { 
+    console.log(`[MCP:get_profile] Creating new profile for userId: ${userId}`);
+    profile = new Profile({ userId }); 
+    await profile.save(); 
+  } else {
+    console.log(`[MCP:get_profile] Profile found. Resume text length: ${profile.resumeText?.length || 0}`);
+  }
+  
   return { profile: toObj(profile) };
 }
 
 export async function handle_update_profile({ userId = 'default', updates }) {
+  // Never allow clearing resumeText accidentally
+  // If updates doesn't include resumeText, fetch existing and preserve it
+  let existingResumeText = null;
+  if (!updates.resumeText) {
+    const existing = await Profile.findOne({ userId });
+    if (existing?.resumeText) {
+      existingResumeText = existing.resumeText;
+      console.log(`[MCP:update_profile] Preserving existing resume text (${existingResumeText.length} chars)`);
+    }
+  }
+  
+  const finalUpdates = {
+    ...updates,
+    userId,
+    // Preserve resumeText if not in updates
+    ...(existingResumeText && { resumeText: existingResumeText }),
+  };
+  
   const profile = await Profile.findOneAndUpdate(
     { userId },
-    { ...updates, userId },
-    { new: true, upsert: true, runValidators: true }
+    finalUpdates,
+    { new: true, upsert: true, runValidators: true, writeConcern: { w: 'majority' } }
   );
+  console.log(`[MCP:update_profile] Updated profile for userId: ${userId}, Resume length: ${profile.resumeText?.length || 0}`);
   return { updated: true, profile: toObj(profile) };
 }
 
