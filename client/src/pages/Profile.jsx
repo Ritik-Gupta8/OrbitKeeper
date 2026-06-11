@@ -71,16 +71,24 @@ export default function Profile() {
   ];
 
   return (
-    <div className="max-w-2xl space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="relative max-w-2xl space-y-5">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="ok-animate-blob absolute -top-32 right-10 w-[28rem] h-[28rem] rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="ok-animate-blob absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-purple-600/20 blur-3xl" style={{ animationDelay: '6s' }} />
+      </div>
+
+      <div className="flex items-center justify-between ok-animate-fade-up">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-100">Profile</h1>
+          <h1 className="text-2xl font-bold">
+            <span className="ok-gradient-text">Profile</span>
+          </h1>
           <p className="text-sm text-zinc-500">Your career information powers the AI agent</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm px-4 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-50"
         >
           {saved ? <CheckCircle2 size={14} /> : saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saved ? 'Saved!' : saving ? 'Saving...' : 'Save'}
@@ -88,7 +96,7 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-zinc-800 flex gap-0">
+      <div className="border-b border-zinc-800 flex gap-0 ok-animate-fade-up ok-delay-1">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -107,7 +115,7 @@ export default function Profile() {
 
       {/* Info Tab */}
       {activeTab === 'info' && (
-        <div className="card p-5 space-y-4">
+        <div className="glass rounded-xl p-5 space-y-4 ok-animate-fade-up">
           <div className="grid grid-cols-2 gap-4">
             <F label="Full Name"><input className="inp" value={profile.name || ''} onChange={e => set('name', e.target.value)} placeholder="Jane Doe" /></F>
             <F label="Email"><input className="inp" type="email" value={profile.email || ''} onChange={e => set('email', e.target.value)} placeholder="jane@email.com" /></F>
@@ -123,7 +131,7 @@ export default function Profile() {
 
       {/* Goals Tab */}
       {activeTab === 'goals' && (
-        <div className="card p-5 space-y-4">
+        <div className="glass rounded-xl p-5 space-y-4 ok-animate-fade-up">
           <F label="Career Goals">
             <textarea className="inp resize-none" rows={4} value={profile.careerGoals || ''} onChange={e => set('careerGoals', e.target.value)} placeholder="I want to become a software engineer at a product company..." />
           </F>
@@ -141,7 +149,7 @@ export default function Profile() {
 
       {/* Skills Tab */}
       {activeTab === 'skills' && (
-        <div className="card p-5 space-y-4">
+        <div className="glass rounded-xl p-5 space-y-4 ok-animate-fade-up">
           <F label="Programming Languages">
             <input className="inp" value={profile.programmingLanguages?.join(', ') || ''} onChange={e => set('programmingLanguages', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="Python, JavaScript, Java, C++" />
           </F>
@@ -176,8 +184,8 @@ export default function Profile() {
 
       {/* Resume Tab */}
       {activeTab === 'resume' && (
-        <div className="space-y-4">
-          <div className="card p-5">
+        <div className="space-y-4 ok-animate-fade-up">
+          <div className="glass rounded-xl p-5">
             <h3 className="text-sm font-medium text-zinc-300 mb-3">Upload Resume</h3>
             {profile.resumeFileName && (
               <div className="flex items-center gap-2 mb-3 p-3 bg-zinc-800/50 rounded-lg">
@@ -194,7 +202,7 @@ export default function Profile() {
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-2 w-full justify-center py-8 border-2 border-dashed border-zinc-700 hover:border-indigo-600 rounded-xl text-sm text-zinc-500 hover:text-indigo-400 transition-colors"
+              className="flex items-center gap-2 w-full justify-center py-8 border-2 border-dashed border-zinc-700 hover:border-indigo-600 hover:bg-indigo-600/5 rounded-xl text-sm text-zinc-500 hover:text-indigo-400 transition-all"
             >
               {uploading
                 ? <><Loader2 size={16} className="animate-spin" /> Analyzing resume with AI...</>
