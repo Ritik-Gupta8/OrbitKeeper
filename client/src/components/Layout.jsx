@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Briefcase, MessageSquare, User,
-  ChevronLeft, ChevronRight, Sparkles, Bell, LogOut
+  ChevronLeft, ChevronRight, Bell, LogOut
 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -38,8 +38,8 @@ export default function Layout() {
       )}>
         {/* Logo */}
         <div className={cn('flex items-center gap-2.5 px-4 h-14 border-b border-zinc-800', collapsed && 'justify-center px-0')}>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-            <Sparkles size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-zinc-800/50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img src="/favicon.png" alt="OrbitKeeper Logo" className="w-full h-full object-cover" />
           </div>
           {!collapsed && (
             <div>

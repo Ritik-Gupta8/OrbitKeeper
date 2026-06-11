@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/firebase.js';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -27,8 +27,8 @@ export default function Login() {
       <div className="max-w-md w-full">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-            <Sparkles size={28} className="text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-900/50 border border-zinc-800 mb-4 overflow-hidden">
+            <img src="/favicon.png" alt="OrbitKeeper Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-zinc-100 mb-2">
             Welcome to OrbitKeeper
