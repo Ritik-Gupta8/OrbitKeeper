@@ -11,7 +11,7 @@
 <br/>
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-orbitkeeper.vercel.app-6366f1?style=for-the-badge)](https://orbitkeeper.vercel.app)
-[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/RZxywPR7xvc)
+[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/rDdnIpe4epo)
 
 <br/>
 
