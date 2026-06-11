@@ -67,23 +67,31 @@ export default function ApplicationTracker() {
   if (loading) return <PageLoader text="Loading applications..." />;
 
   return (
-    <div className="space-y-4 max-w-6xl">
+    <div className="relative space-y-4 max-w-6xl">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="ok-animate-blob absolute -top-32 right-10 w-[28rem] h-[28rem] rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="ok-animate-blob absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-purple-600/20 blur-3xl" style={{ animationDelay: '6s' }} />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between ok-animate-fade-up">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-100">Applications</h1>
+          <h1 className="text-2xl font-bold">
+            <span className="ok-gradient-text">Applications</span>
+          </h1>
           <p className="text-sm text-zinc-500">{applications.length} total</p>
         </div>
         <Link
           to="/applications/new"
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98]"
         >
           <Plus size={15} /> Add Application
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap ok-animate-fade-up ok-delay-1">
         <div className="relative flex-1 min-w-48">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
@@ -91,7 +99,7 @@ export default function ApplicationTracker() {
             placeholder="Search company, role..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+            className="w-full pl-9 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -100,9 +108,9 @@ export default function ApplicationTracker() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`text-xs px-2.5 py-1 rounded-full transition-colors capitalize ${
+              className={`text-xs px-2.5 py-1 rounded-full transition-all capitalize active:scale-95 ${
                 statusFilter === s
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/20'
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
@@ -116,7 +124,7 @@ export default function ApplicationTracker() {
       {sorted.length === 0 ? (
         <EmptyState search={search} />
       ) : (
-        <div className="card overflow-hidden">
+        <div className="glass rounded-xl overflow-hidden ok-animate-fade-up ok-delay-2">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -147,11 +155,11 @@ export default function ApplicationTracker() {
                   return (
                     <tr
                       key={app._id}
-                      className="hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                      className="group hover:bg-zinc-800/50 transition-colors cursor-pointer"
                       onClick={() => window.location.href = `/applications/${app._id}`}
                     >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-sm text-zinc-200">{app.company}</div>
+                        <div className="font-medium text-sm text-zinc-200 group-hover:text-white transition-colors">{app.company}</div>
                         {app.location && <div className="text-xs text-zinc-500">{app.location}</div>}
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-300">{app.role}</td>
@@ -173,7 +181,7 @@ export default function ApplicationTracker() {
                       <td className="px-4 py-3">
                         <button
                           onClick={(e) => handleDelete(app._id, e)}
-                          className="p-1.5 rounded-md text-zinc-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          className="p-1.5 rounded-md text-zinc-600 hover:text-red-400 hover:bg-red-400/10 transition-colors active:scale-90"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -192,7 +200,7 @@ export default function ApplicationTracker() {
 
 function EmptyState({ search }) {
   return (
-    <div className="card p-12 flex flex-col items-center gap-3 text-center">
+    <div className="glass rounded-xl p-12 flex flex-col items-center gap-3 text-center ok-animate-fade-up">
       <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
         <ExternalLink size={20} className="text-zinc-500" />
       </div>
@@ -205,7 +213,7 @@ function EmptyState({ search }) {
       {!search && (
         <Link
           to="/applications/new"
-          className="mt-2 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+          className="mt-2 flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm px-4 py-2 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98]"
         >
           <Plus size={14} /> Add your first application
         </Link>
