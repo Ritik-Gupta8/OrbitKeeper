@@ -57,22 +57,30 @@ export default function InterviewWorkspace() {
   const doneQs = Object.keys(checked).filter(k => checked[k]).length;
 
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="relative max-w-3xl space-y-5">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="ok-animate-blob absolute -top-32 right-10 w-[28rem] h-[28rem] rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="ok-animate-blob absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-purple-600/20 blur-3xl" style={{ animationDelay: '6s' }} />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between ok-animate-fade-up">
         <div className="flex items-center gap-3">
-          <Link to={`/applications/${id}`} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+          <Link to={`/applications/${id}`} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors active:scale-95">
             <ArrowLeft size={14} className="text-zinc-400" />
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-100">Interview Workspace</h1>
+            <h1 className="text-2xl font-bold">
+              <span className="ok-gradient-text">Interview Workspace</span>
+            </h1>
             {app && <p className="text-sm text-zinc-400">{app.company} · {app.role}</p>}
           </div>
         </div>
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm px-4 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-50"
         >
           {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
           {generating ? 'Generating...' : questions ? 'Regenerate' : 'Generate Questions'}
@@ -81,7 +89,7 @@ export default function InterviewWorkspace() {
 
       {/* Progress */}
       {totalQs > 0 && (
-        <div className="card p-4">
+        <div className="glass rounded-xl p-4 ok-animate-fade-up ok-delay-1">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-zinc-400">Preparation Progress</span>
             <span className="text-sm font-medium text-zinc-200">{doneQs}/{totalQs} reviewed</span>
@@ -97,8 +105,8 @@ export default function InterviewWorkspace() {
 
       {/* Questions */}
       {!questions ? (
-        <div className="card p-12 flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-indigo-600/20 flex items-center justify-center">
+        <div className="glass rounded-xl p-12 flex flex-col items-center gap-4 text-center ok-animate-fade-up ok-delay-1">
+          <div className="w-14 h-14 rounded-full bg-indigo-600/20 flex items-center justify-center ok-animate-float">
             <Sparkles size={22} className="text-indigo-400" />
           </div>
           <div>
@@ -110,7 +118,7 @@ export default function InterviewWorkspace() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-5 py-2.5 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm px-5 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98]"
           >
             {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {generating ? 'Generating questions...' : 'Generate Questions'}
@@ -118,14 +126,14 @@ export default function InterviewWorkspace() {
         </div>
       ) : (
         <div className="space-y-3">
-          {SECTION_CONFIG.map(({ key, emoji, label, desc }) => {
+          {SECTION_CONFIG.map(({ key, emoji, label, desc }, idx) => {
             const qs = questions[key] || [];
             if (!qs.length) return null;
             const isExpanded = expanded[key];
             const sectionDone = qs.filter((_, i) => checked[`${key}-${i}`]).length;
 
             return (
-              <div key={key} className="card overflow-hidden">
+              <div key={key} className={`glass rounded-xl overflow-hidden ok-animate-fade-up ok-delay-${(idx % 5) + 1}`}>
                 <button
                   onClick={() => toggleSection(key)}
                   className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-800/50 transition-colors"
@@ -171,7 +179,7 @@ export default function InterviewWorkspace() {
 
           {/* Prep Tips */}
           {questions.preparationTips && (
-            <div className="card p-5">
+            <div className="glass rounded-xl p-5 ok-animate-fade-up">
               <h3 className="text-sm font-medium text-zinc-300 mb-3">💡 Preparation Tips</h3>
               <ul className="space-y-1.5">
                 {questions.preparationTips.map((tip, i) => (
