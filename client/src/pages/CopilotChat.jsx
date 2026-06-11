@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Bot, User } from 'lucide-react';
+import { Send, Loader2, Bot, User } from 'lucide-react';
 import { askCopilot } from '../lib/api.js';
 
 const STARTER_PROMPTS = [
@@ -47,8 +47,8 @@ export default function CopilotChat() {
     <div className="flex flex-col h-full max-w-2xl mx-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-zinc-800">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-          <Sparkles size={16} className="text-white" />
+        <div className="w-9 h-9 rounded-xl bg-zinc-800/50 flex items-center justify-center overflow-hidden">
+          <img src="/favicon.png" alt="OrbitKeeper Logo" className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="text-sm font-semibold text-zinc-100">AI Career Copilot</h1>
