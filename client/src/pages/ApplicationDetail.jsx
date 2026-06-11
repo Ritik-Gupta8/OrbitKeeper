@@ -72,31 +72,37 @@ export default function ApplicationDetail() {
   ];
 
   return (
-    <div className="max-w-4xl space-y-5">
+    <div className="relative max-w-4xl space-y-5">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="ok-animate-blob absolute -top-32 right-10 w-[28rem] h-[28rem] rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="ok-animate-blob absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-purple-600/20 blur-3xl" style={{ animationDelay: '6s' }} />
+      </div>
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 ok-animate-fade-up">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors active:scale-95">
             <ArrowLeft size={14} className="text-zinc-400" />
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-100">{app.company}</h1>
+            <h1 className="text-2xl font-bold text-zinc-100">{app.company}</h1>
             <p className="text-sm text-zinc-400">{app.role} {app.location && `· ${app.location}`}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {app.jobUrl && (
-            <a href={app.jobUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+            <a href={app.jobUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors active:scale-95">
               <ExternalLink size={14} className="text-zinc-400" />
             </a>
           )}
-          <Link to={`/interview/${id}`} className="flex items-center gap-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg transition-colors">
+          <Link to={`/interview/${id}`} className="flex items-center gap-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg transition-colors active:scale-95">
             <Brain size={14} /> Interview
           </Link>
           <button
             onClick={handleRunAnalysis}
             disabled={analyzing || !app.jobDescription}
-            className="flex items-center gap-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3 py-2 rounded-lg transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
           >
             <Sparkles size={14} />
             {analyzing ? 'Analyzing...' : hasAnalysis ? 'Re-analyze' : 'Run AI Analysis'}
@@ -109,7 +115,7 @@ export default function ApplicationDetail() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Status */}
-        <div className="card p-4">
+        <div className="glass rounded-xl p-4 hover:border-zinc-600 transition-colors ok-animate-fade-up ok-delay-1">
           <p className="text-xs text-zinc-500 mb-2">Status</p>
           {editStatus ? (
             <select
@@ -122,14 +128,15 @@ export default function ApplicationDetail() {
               {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_CONFIG[s]?.label}</option>)}
             </select>
           ) : (
-            <button onClick={() => setEditStatus(true)} className="hover:opacity-80 transition-opacity">
+            <button onClick={() => setEditStatus(true)} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
               <StatusBadge status={app.status} />
+              <Edit2 size={11} className="text-zinc-600" />
             </button>
           )}
         </div>
 
         {/* Match Score */}
-        <div className="card p-4">
+        <div className="glass rounded-xl p-4 hover:border-zinc-600 transition-colors ok-animate-fade-up ok-delay-2">
           <p className="text-xs text-zinc-500 mb-2">Match Score</p>
           {hasAnalysis
             ? <MatchScore score={app.matchScore} size="lg" />
@@ -138,7 +145,7 @@ export default function ApplicationDetail() {
         </div>
 
         {/* Deadline */}
-        <div className="card p-4">
+        <div className="glass rounded-xl p-4 hover:border-zinc-600 transition-colors ok-animate-fade-up ok-delay-3">
           <p className="text-xs text-zinc-500 mb-2">Deadline</p>
           {dl ? (
             <div>
@@ -151,12 +158,12 @@ export default function ApplicationDetail() {
         </div>
 
         {/* Progress */}
-        <div className="card p-4">
+        <div className="glass rounded-xl p-4 hover:border-zinc-600 transition-colors ok-animate-fade-up ok-delay-4">
           <p className="text-xs text-zinc-500 mb-2">Tasks Done</p>
           <div className="text-2xl font-bold text-zinc-100">{completedTasks}/{app.actionPlan?.length || 0}</div>
           {app.actionPlan?.length > 0 && (
             <div className="mt-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
-              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(completedTasks / app.actionPlan.length) * 100}%` }} />
+              <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all" style={{ width: `${(completedTasks / app.actionPlan.length) * 100}%` }} />
             </div>
           )}
         </div>
@@ -192,9 +199,9 @@ export default function ApplicationDetail() {
 
 function OverviewTab({ app }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ok-animate-fade-up">
       {app.jobSummary?.summary && (
-        <div className="card p-5">
+        <div className="glass rounded-xl p-5">
           <h3 className="text-sm font-medium text-zinc-300 mb-2">Job Summary</h3>
           <p className="text-sm text-zinc-400 leading-relaxed">{app.jobSummary.summary}</p>
         </div>
@@ -208,7 +215,7 @@ function OverviewTab({ app }) {
         )}
       </div>
       {app.notes && (
-        <div className="card p-5">
+        <div className="glass rounded-xl p-5">
           <h3 className="text-sm font-medium text-zinc-300 mb-2">Notes</h3>
           <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{app.notes}</p>
         </div>
@@ -224,10 +231,10 @@ function OverviewTab({ app }) {
 
 function AnalysisTab({ app }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ok-animate-fade-up">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {app.strengthAreas?.length > 0 && (
-          <div className="card p-5">
+          <div className="glass rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={14} className="text-green-400" />
               <h3 className="text-sm font-medium text-zinc-300">Strengths</h3>
@@ -242,7 +249,7 @@ function AnalysisTab({ app }) {
           </div>
         )}
         {app.missingSkills?.length > 0 && (
-          <div className="card p-5">
+          <div className="glass rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle size={14} className="text-yellow-400" />
               <h3 className="text-sm font-medium text-zinc-300">Missing Skills</h3>
@@ -256,7 +263,7 @@ function AnalysisTab({ app }) {
         )}
       </div>
       {app.improvementSuggestions?.length > 0 && (
-        <div className="card p-5">
+        <div className="glass rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb size={14} className="text-purple-400" />
             <h3 className="text-sm font-medium text-zinc-300">Improvement Suggestions</h3>
@@ -277,13 +284,13 @@ function AnalysisTab({ app }) {
 function PlanTab({ app, onToggleTask }) {
   const priorities = ['high', 'medium', 'low'];
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ok-animate-fade-up">
       {priorities.map(priority => {
         const tasks = app.actionPlan?.filter(t => t.priority === priority) || [];
         if (!tasks.length) return null;
         const cfg = PRIORITY_CONFIG[priority];
         return (
-          <div key={priority} className="card p-5">
+          <div key={priority} className="glass rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.color} ${cfg.bg}`}>
                 {cfg.label} Priority
@@ -328,7 +335,7 @@ function InterviewTab({ app, applicationId }) {
 
   if (!sections.length) {
     return (
-      <div className="card p-10 text-center">
+      <div className="glass rounded-xl p-10 text-center ok-animate-fade-up">
         <Brain size={28} className="text-zinc-700 mx-auto mb-3" />
         <p className="text-sm text-zinc-400">No interview questions yet.</p>
         <p className="text-xs text-zinc-500 mt-1">Run the AI analysis to generate personalized questions.</p>
@@ -340,12 +347,12 @@ function InterviewTab({ app, applicationId }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ok-animate-fade-up">
       <Link to={`/interview/${applicationId}`} className="flex items-center justify-end gap-1.5 text-sm text-indigo-400 hover:text-indigo-300">
         <BookOpen size={13} /> Open Interview Workspace
       </Link>
       {sections.map(({ label, qs }) => (
-        <div key={label} className="card p-5">
+        <div key={label} className="glass rounded-xl p-5">
           <h3 className="text-sm font-medium text-zinc-300 mb-3">{label}</h3>
           <ol className="space-y-2 list-decimal list-inside">
             {qs.map((q, i) => (
@@ -364,7 +371,7 @@ function SkillList({ title, skills, color }) {
     purple: 'bg-purple-900/30 text-purple-300',
   };
   return (
-    <div className="card p-5">
+    <div className="glass rounded-xl p-5">
       <h3 className="text-sm font-medium text-zinc-300 mb-3">{title}</h3>
       <div className="flex flex-wrap gap-1.5">
         {skills.map((s, i) => (
@@ -378,7 +385,7 @@ function SkillList({ title, skills, color }) {
 function Collapsible({ title, children }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="card overflow-hidden">
+    <div className="glass rounded-xl overflow-hidden">
       <button
         className="w-full flex items-center justify-between px-5 py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
         onClick={() => setOpen(!open)}
