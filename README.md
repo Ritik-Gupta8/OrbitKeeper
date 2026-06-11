@@ -382,8 +382,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 📧 Contact
 
 **Developers**: Ritik Gupta , Yashovardhan Thopte
-**Email**: porwal2000ritik@gmail.com  
-**GitHub**: https://github.com/Ritik-Gupta8  
+**Email**: porwal2000ritik@gmail.com  |  www.yyaasshh@gmail.com
+**GitHub**: https://github.com/Ritik-Gupta8  |  https://github.com/yash0238
 
 ---
 
