@@ -2,29 +2,50 @@
 
 **Technical Deep Dive & Future Roadmap**
 
+> Built on **Google Agent Platform** (Google Cloud's enterprise agent stack, formerly Vertex AI) with **Gemini 3.5 Flash** and a custom **MongoDB MCP server**.
+
 ---
 
 ## Table of Contents
 
-1. [System Overview](#system-overview)
-2. [Architecture Layers](#architecture-layers)
-3. [Data Flow Diagrams](#data-flow-diagrams)
-4. [MCP Integration](#mcp-integration)
-5. [AI Agent System](#ai-agent-system)
-6. [Authentication & Security](#authentication--security)
-7. [Database Schema](#database-schema)
-8. [API Endpoints](#api-endpoints)
-9. [Deployment Architecture](#deployment-architecture)
-10. [Performance & Scalability](#performance--scalability)
-11. [Future Enhancements](#future-enhancements)
-12. [Known Limitations](#known-limitations)
-13. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
+1. [Google Agent Platform Integration](#google-agent-platform-integration)
+2. [System Overview](#system-overview)
+3. [Architecture Layers](#architecture-layers)
+4. [Data Flow Diagrams](#data-flow-diagrams)
+5. [MCP Integration](#mcp-integration)
+6. [AI Agent System](#ai-agent-system)
+7. [Authentication & Security](#authentication--security)
+8. [Database Schema](#database-schema)
+9. [API Endpoints](#api-endpoints)
+10. [Deployment Architecture](#deployment-architecture)
+11. [Performance & Scalability](#performance--scalability)
+12. [Future Enhancements](#future-enhancements)
+13. [Known Limitations](#known-limitations)
+14. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
+
+---
+
+## Google Agent Platform Integration
+
+OrbitKeeper is built on **Google Agent Platform** — Google Cloud's enterprise platform for building and running AI agents (the platform formerly known as Vertex AI). Every piece of reasoning in OrbitKeeper is powered by **Gemini 3.5 Flash**, served through the Agent Platform's Vertex AI inference layer and orchestrated as a coordinated multi-agent system.
+
+**Mapping OrbitKeeper to the Agent Platform building blocks:**
+
+| Agent Platform Capability | OrbitKeeper Implementation |
+|---------------------------|----------------------------|
+| **Models** (Gemini) | Gemini 3.5 Flash for all reasoning, planning, and generation |
+| **Agents** (multi-agent orchestration) | 6 specialized agents coordinated through a controller pipeline |
+| **MCP Servers** (external capabilities) | A custom MongoDB MCP server exposing 14 tools |
+| **Memory** (long-term context) | Persistent career memory stored in MongoDB Atlas |
+| **Tools** (function calling) | Standardized, schema-validated tool calls via the official MCP SDK |
+
+The agents do more than chat — they **reason, plan, invoke tools, and execute tasks** under user oversight. This agentic loop (perceive → reason → act via tools → observe) is exactly what the Agent Platform is designed to run.
 
 ---
 
 ## System Overview
 
-OrbitKeeper follows a **3-tier architecture**:
+OrbitKeeper follows a **3-tier architecture** running on **Google Agent Platform**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -44,10 +65,10 @@ OrbitKeeper follows a **3-tier architecture**:
 └────────────────────┬────────────────────────────────────┘
                      │ MCP Protocol
 ┌────────────────────▼────────────────────────────────────┐
-│  DATA LAYER                                             │
+│  DATA & AI LAYER                                        │
 │  - MongoDB Atlas (Primary Database)                     │
 │  - Firebase Auth (User Management)                      │
-│  - Google Cloud Vertex AI (AI Models)                   │
+│  - Google Agent Platform / Vertex AI (Gemini models)    │
 │  - Gmail SMTP (Email Delivery)                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -132,9 +153,9 @@ server/
 - **Admin SDK**: Server-side verification
 - **Security**: User-specific data isolation
 
-**3. Google Cloud Vertex AI**:
+**3. Google Agent Platform (Vertex AI)**:
 - **Model**: Gemini 3.5 Flash
-- **Region**: us-central1
+- **Endpoint**: global (Gemini 3 family is served on the global endpoint)
 - **Authentication**: Service account JSON
 - **Rate Limits**: Standard enterprise tier
 
@@ -779,8 +800,8 @@ server/
 └──┬──────────┬──────────┬──────────┬─────────────────────┘
    │          │          │          │
    ▼          ▼          ▼          ▼
-MongoDB   Vertex AI  Firebase   Gmail
-Atlas                  Auth       SMTP
+MongoDB   Agent      Firebase   Gmail
+Atlas     Platform   Auth       SMTP
 ```
 
 ### Environment Variables
