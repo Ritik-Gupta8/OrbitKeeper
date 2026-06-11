@@ -5,7 +5,6 @@ import { createApplication, analyzeJob } from '../lib/api.js';
 
 const STATUS_OPTIONS = ['saved', 'applied', 'phone_screen', 'technical', 'interview', 'offer', 'rejected'];
 const TYPE_OPTIONS = ['internship', 'full-time', 'part-time', 'contract'];
-
 export default function NewApplication() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -68,27 +67,36 @@ export default function NewApplication() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+    <div className="relative max-w-2xl space-y-6">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="ok-animate-blob absolute -top-32 right-0 w-[28rem] h-[28rem] rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="ok-animate-blob absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-purple-600/20 blur-3xl" style={{ animationDelay: '6s' }} />
+      </div>
+
+      <div className="flex items-center gap-3 ok-animate-fade-up">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors active:scale-95">
           <ArrowLeft size={14} className="text-zinc-400" />
         </button>
         <div>
-          <h1 className="text-xl font-semibold text-zinc-100">New Application</h1>
+          <h1 className="text-2xl font-bold">
+            <span className="ok-gradient-text">New Application</span>
+          </h1>
           <p className="text-sm text-zinc-500">Paste a job description to let the AI analyze it</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Job Description first — AI fills the rest */}
-        <div className="card p-5 space-y-3">
+        <div className="relative overflow-hidden glass rounded-xl p-5 space-y-3 ok-animate-fade-up ok-delay-1">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-zinc-300">Job Description</label>
             <button
               type="button"
               onClick={handleAnalyzePreview}
               disabled={!form.jobDescription.trim() || analyzing}
-              className="flex items-center gap-1.5 text-xs bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 text-xs bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 px-3 py-1.5 rounded-lg transition-all hover:shadow-md hover:shadow-indigo-500/10 active:scale-95 disabled:opacity-40"
             >
               {analyzing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
               {analyzing ? 'Analyzing...' : 'AI Analyze'}
@@ -99,13 +107,14 @@ export default function NewApplication() {
             placeholder="Paste the full job description here. The AI will extract company, role, skills, and deadline automatically..."
             value={form.jobDescription}
             onChange={e => set('jobDescription', e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none transition-colors"
           />
         </div>
 
         {/* AI Preview */}
         {preview && (
-          <div className="card p-4 border-indigo-800/50 bg-indigo-950/30">
+          <div className="relative overflow-hidden rounded-xl p-4 border border-indigo-800/50 bg-indigo-950/30 ok-animate-fade-up">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/70 to-transparent" />
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={13} className="text-indigo-400" />
               <span className="text-xs font-medium text-indigo-400">AI Analysis Preview</span>
@@ -127,7 +136,7 @@ export default function NewApplication() {
         )}
 
         {/* Manual Fields */}
-        <div className="card p-5 space-y-4">
+        <div className="glass rounded-xl p-5 space-y-4 ok-animate-fade-up ok-delay-2">
           <h2 className="text-sm font-medium text-zinc-300">Application Details</h2>
 
           <div className="grid grid-cols-2 gap-4">
@@ -176,18 +185,18 @@ export default function NewApplication() {
           </Field>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 ok-animate-fade-up ok-delay-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-xl transition-all active:scale-[0.98]"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : 'Save Application'}
           </button>
