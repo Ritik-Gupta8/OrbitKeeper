@@ -20,10 +20,12 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const PROJECT  = process.env.GOOGLE_CLOUD_PROJECT;
-const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+// Gemini 3 family models are served on the GLOBAL endpoint (regional like
+// us-central1 returns 404). Default to 'global'.
+const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'global';
 
-// gemini-2.5-flash works on new GCP projects (2.0/1.5 removed for new projects)
-const DEFAULT_MODEL = process.env.GOOGLE_CLOUD_MODEL || 'gemini-2.5-flash';
+// gemini-3.5-flash is GA/stable in the Gemini 3 family (global endpoint only)
+const DEFAULT_MODEL = process.env.GOOGLE_CLOUD_MODEL || 'gemini-3.5-flash';
 
 // Handle credentials from JSON string (for Render deployment)
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {

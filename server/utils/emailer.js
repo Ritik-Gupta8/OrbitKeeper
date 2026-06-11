@@ -62,7 +62,12 @@ export const sendDeadlineReminder = async ({ to, company, role, deadline, remain
     <body>
       <div class="container">
         <div class="header">
-          <h1>⏰ Application Deadline Reminder</h1>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px;">
+              <img src="${process.env.CLIENT_URL || 'https://orbitkeeper.vercel.app'}/favicon.png" alt="OrbitKeeper" style="width: 100%; height: 100%; object-fit: contain;" />
+            </div>
+            <h1 style="margin: 0;">Application Deadline Reminder</h1>
+          </div>
           <p>OrbitKeeper • Career Agent</p>
         </div>
         <div class="body">
@@ -100,7 +105,7 @@ export const sendDeadlineReminder = async ({ to, company, role, deadline, remain
   `;
 
   const info = await transporter.sendMail({
-    from: `"OrbitKeeper 🤖" <${process.env.EMAIL_USER}>`,
+    from: `"OrbitKeeper" <${process.env.EMAIL_USER}>`,
     to,
     subject: `⏰ ${remainingTime} left to apply — ${company} ${role}`,
     html,
