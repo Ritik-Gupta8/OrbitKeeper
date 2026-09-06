@@ -173,16 +173,21 @@ export const getInterviewQuestions = async (req, res) => {
   }
 };
 
-// ── Career Memory Agent ───────────────────────────────────────────────────────
+// ── Career Memory Agent & Personal Gemini Journal ────────────────────────────
+import { getJournalHistory } from '../utils/firestoreJournal.js';
 
 export const askCareerAgent = async (req, res) => {
   try {
-    const { question } = req.body;
-    const userId = req.headers['x-user-id'] || 'default';
+    const { question, sessionId } = req.body;
+    // Always prioritize UID obtained from verified Firebase token
+    const userId = req.user?.uid || req.headers['x-user-id'];
+    if (!userId || userId === 'default') {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     if (!question) return res.status(400).json({ error: 'question is required' });
 
-    // careerMemoryAgent uses MCP tools internally: find_documents + get_profile
-    const result = await answerCareerQuestion(question, userId);
+    // careerMemoryAgent uses MCP tools (MongoDB) and Firestore Journal internally
+    const result = await answerCareerQuestion(question, userId, sessionId || 'default');
     res.json({
       success:      true,
       mcpToolsUsed: ['find_documents', 'get_profile'],
@@ -192,3 +197,25 @@ export const askCareerAgent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getCareerHistory = async (req, res) => {
+  try {
+    // Strictly require authenticated UID from verified Firebase token
+    const userId = req.user?.uid || req.headers['x-user-id'];
+    if (!userId || userId === 'default') {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const history = await getJournalHistory(userId, limit);
+
+    res.json({
+      success: true,
+      count: history.length,
+      data: history,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
