@@ -20,8 +20,21 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://orbitkeeper.vercel.app',
+].filter(Boolean);
+
 app.use(cors({
-  origin:      process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -120,10 +133,10 @@ app.use((err, req, res, next) => {
 const start = async () => {
   await connectDB();
 
-  app.listen(PORT, async () => {
-    console.log(`\n🚀 OrbitKeeper API  →  http://localhost:${PORT}`);
-    console.log(`🔧 MCP Server endpoint     →  POST http://localhost:${PORT}/mcp`);
-    console.log(`📋 MCP Tool manifest       →  GET  http://localhost:${PORT}/api/mcp/tools\n`);
+  app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`\n🚀 OrbitKeeper API  →  http://0.0.0.0:${PORT}`);
+    console.log(`🔧 MCP Server endpoint     →  POST http://0.0.0.0:${PORT}/mcp`);
+    console.log(`📋 MCP Tool manifest       →  GET  http://0.0.0.0:${PORT}/api/mcp/tools\n`);
 
     // Connect MCP client after server is listening
     // Small delay ensures the /mcp endpoint is ready to accept connections
