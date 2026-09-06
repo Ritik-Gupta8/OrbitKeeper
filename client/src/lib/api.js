@@ -27,11 +27,13 @@ export const updateApplication = (id, data) => api.put(`/applications/${id}`, da
 export const deleteApplication = (id) => api.delete(`/applications/${id}`);
 export const getDashboardStats = () => api.get('/applications/stats');
 
-// Agent
+// Agent & Journal
 export const runFullAnalysis = (applicationId) => api.post(`/agent/analyze/${applicationId}`);
 export const analyzeJob = (data) => api.post('/agent/analyze-job', data);
 export const getInterviewQuestions = (applicationId) => api.get(`/agent/interview/${applicationId}`);
-export const askCopilot = (question) => api.post('/agent/ask', { question });
+export const askCopilot = (question, sessionId) => api.post('/agent/ask', { question, sessionId });
+export const getJournalHistory = (limit = 20) => api.get('/agent/history', { params: { limit } });
+
 
 // Resume
 export const uploadResume = (formData) => api.post('/resume/upload', formData, {
