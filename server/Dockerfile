@@ -16,6 +16,9 @@ RUN npm ci --omit=dev || npm install --omit=dev
 # Copy application source code
 COPY . .
 
+# Ensure app files are owned by node user
+RUN chown -R node:node /app
+
 # Set container environment defaults
 ENV NODE_ENV=production
 ENV PORT=8080
