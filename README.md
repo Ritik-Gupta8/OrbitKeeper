@@ -2,7 +2,7 @@
 
 <img src="client/public/favicon.png" alt="OrbitKeeper Logo" width="90" height="90" />
 
-# 🚀 OrbitKeeper
+#  OrbitKeeper
 
 ### The Autonomous AI Career Agent that doesn't just answer — it _acts_.
 
@@ -427,8 +427,7 @@ Open **http://localhost:5173** 🎉
 ## 🎥 Demo
 
 - 🌐 **Live App:** [orbitkeeper.vercel.app](https://orbitkeeper.vercel.app)
-- ▶️ **Video walkthrough:** _add your YouTube/Loom link here_
-
+s
 ---
 
 ## 📄 License
