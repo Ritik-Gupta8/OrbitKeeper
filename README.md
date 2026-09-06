@@ -419,7 +419,7 @@ Open **http://localhost:5173** 🎉
 | 🤖 AI Agents | 6 specialized agents |
 | 🔌 MCP Tools | 14 MongoDB operations |
 | 🧠 Model | Gemini 3.5 Flash (Vertex AI) |
-| 👥 Team | 2 developers |
+| 👥 Team | 1 developer |
 | 💸 Running cost | $0 / month |
 
 ---
@@ -442,8 +442,6 @@ Released under the **MIT License** — see [LICENSE](LICENSE) for details.
 | Developer | Contact |
 |-----------|---------|
 | **Ritik Gupta** | [GitHub](https://github.com/Ritik-Gupta8) · porwal2000ritik@gmail.com |
-| **Yashovardhan Thopte** | [GitHub](https://github.com/yash0238) · www.yyaasshh@gmail.com |
-
 ---
 
 <div align="center">
