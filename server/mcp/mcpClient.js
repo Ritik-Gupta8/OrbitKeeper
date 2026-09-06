@@ -17,7 +17,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import dotenv from 'dotenv';
 dotenv.config();
 
-const MCP_SERVER_URL = `http://localhost:${process.env.PORT || 5000}/mcp`;
+const getMcpServerUrl = () => `http://127.0.0.1:${process.env.PORT || 5000}/mcp`;
 
 class MCPClient {
   constructor() {
@@ -34,18 +34,20 @@ class MCPClient {
       return;
     }
     this._connecting = true;
+    const url = getMcpServerUrl();
     try {
       this._client = new Client(
         { name: 'orbitkeeper-agent', version: '1.0.0' },
         { capabilities: { tools: {} } }
       );
-      const transport = new StreamableHTTPClientTransport(new URL(MCP_SERVER_URL));
+      const transport = new StreamableHTTPClientTransport(new URL(url));
       await this._client.connect(transport);
       this._connected  = true;
       this._connecting = false;
-      console.log(`[MCPClient] ✅ Connected to MCP server at ${MCP_SERVER_URL}`);
+      console.log(`[MCPClient] ✅ Connected to MCP server at ${url}`);
     } catch (err) {
       this._connecting = false;
+
       // Not fatal — will retry on next call
       console.warn(`[MCPClient] ⚠️  Could not connect to MCP server: ${err.message}`);
     }

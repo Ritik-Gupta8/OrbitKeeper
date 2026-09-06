@@ -131,15 +131,15 @@ app.use((err, req, res, next) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const start = async () => {
-  await connectDB();
-
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`\n🚀 OrbitKeeper API  →  http://0.0.0.0:${PORT}`);
     console.log(`🔧 MCP Server endpoint     →  POST http://0.0.0.0:${PORT}/mcp`);
     console.log(`📋 MCP Tool manifest       →  GET  http://0.0.0.0:${PORT}/api/mcp/tools\n`);
 
+    // Connect to database after listening so Cloud Run health check passes immediately
+    await connectDB();
+
     // Connect MCP client after server is listening
-    // Small delay ensures the /mcp endpoint is ready to accept connections
     setTimeout(async () => {
       await mcpClient.connect();
     }, 500);

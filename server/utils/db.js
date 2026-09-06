@@ -1,11 +1,13 @@
 import mongoose from 'mongoose';
 
 export const connectDB = async () => {
+  if (!process.env.MONGODB_URI) {
+    console.error('❌ MONGODB_URI environment variable is missing!');
+    return false;
+  }
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Ensure we always read from primary replica to avoid replication lag
       readPreference: 'primary',
-      // Ensure writes are acknowledged by majority of replicas
       writeConcern: {
         w: 'majority',
         wtimeout: 5000,
@@ -13,8 +15,9 @@ export const connectDB = async () => {
     });
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
     console.log(`🔒 Read preference: primary | Write concern: majority`);
+    return true;
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    process.exit(1);
+    return false;
   }
 };
