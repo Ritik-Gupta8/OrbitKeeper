@@ -10,12 +10,23 @@ client/.env
 
 # Service account keys — NEVER commit these
 server/service-account-key.json
+server/.temp-service-account.json
 *.json.key
 *-credentials.json
+*.pem
+*.key
 
 # Build
 client/dist/
 client/.vite/
+client/vite.config.js.timestamp*
+pnpm-lock.yaml
+pnpm-workspace.yaml
+server/pnpm-lock.yaml
+server/pnpm-workspace.yaml
+client/pnpm-lock.yaml
+client/pnpm-workspace.yaml
+
 
 # Logs
 *.log
