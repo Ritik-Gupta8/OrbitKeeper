@@ -11,7 +11,7 @@
 <br/>
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-orbitkeeper.vercel.app-6366f1?style=for-the-badge)](https://orbitkeeper.vercel.app)
-[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/rDdnIpe4epo)
+
 
 <br/>
 
@@ -54,15 +54,17 @@
 
 ## ⚡ TL;DR
 
-> **OrbitKeeper is an agentic AI career copilot.** Paste a job description, and a team of six specialized Gemini-powered agents springs into action — scoring your fit, mapping your skill gaps, drafting a prep plan, generating interview questions, and autonomously emailing you before every deadline. It is built on **Google Agent Platform (Vertex AI)** with **Gemini 3.5 Flash**, and it reads and writes its memory through a real **MongoDB MCP server**.
+> **OrbitKeeper is an agentic AI career copilot and secure Personal Gemini Journal.** Paste a job description, and a team of specialized Gemini-powered agents springs into action — scoring your fit, mapping your skill gaps, drafting a prep plan, generating interview questions, reflecting on your career journey in a user-isolated Firestore journal, and autonomously emailing you before every deadline. It is built on **Google Agent Platform (Vertex AI)** with **Gemini 3.5 Flash**, uses a real **MongoDB MCP server** for structured career applications, and leverages **Google Cloud Firestore** for user-isolated conversation logging and reflection memory.
 
 | | |
 |---|---|
 | 🤖 **6 autonomous agents** | reason and execute multi-step career tasks |
-| 🔌 **14 MongoDB MCP tools** | standardized, auditable agent ↔ data layer |
+| 🔌 **14 MongoDB MCP tools** | standardized, auditable agent ↔ career data layer |
+| 📓 **Cloud Firestore Journal** | user-isolated multi-turn conversation memory & reflections |
 | 🧠 **Gemini 3.5 Flash** | served via Google Agent Platform (Vertex AI) |
+| 🔒 **Secret Manager & Zero-Trust** | credentials managed securely; strict server-side UID isolation |
 | ⏰ **Autonomous deadline monitor** | runs 24/7, emails you before you miss out |
-| 💸 **$0/month** | runs entirely on free tiers |
+| 💸 **$0/month** | runs entirely on free tiers (Google Cloud Run + Vercel) |
 
 ---
 
@@ -190,7 +192,7 @@ OrbitKeeper is a true **multi-agent architecture** — each agent owns a single 
 ---
 
 ## ✨ Key Features
-
+ 
 | | Feature | Description |
 |---|---|---|
 | 📊 | **Match Score Dashboard** | See how qualified you are at a glance, 0–100 |
@@ -199,46 +201,57 @@ OrbitKeeper is a true **multi-agent architecture** — each agent owns a single 
 | 🗺️ | **AI Action Plans** | Prioritized, trackable prep tasks per role |
 | 🎤 | **Interview Question Generator** | Role-specific technical, behavioral & project questions |
 | ⏰ | **Autonomous Deadline Agent** | 24/7 cron job emails you 24h & 12h before deadlines |
-| 💬 | **AI Career Copilot** | Chat with full context across all your applications |
-| 🔐 | **Secure Multi-User** | Firebase Google OAuth with per-user data isolation |
+| 📓 | **Personal AI Career Journal** | Multi-turn career conversations persisted to Google Cloud Firestore |
+| 💡 | **AI Career Reflection** | Auto-extracts summaries, key takeaways & next action steps per interaction |
+| 🛡️ | **Zero-Trust UID Isolation** | Verified server-side Firebase UID token scoping + matching `firestore.rules` |
+| 🔐 | **Google Secret Manager** | Secure production secrets handling with zero hardcoded credentials |
 | 🎨 | **Modern Animated UI** | Glassmorphic React + Tailwind interface |
-
+ 
 ---
-
+ 
 ## 🏗️ Architecture at a Glance
-
+ 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  PRESENTATION   React SPA · Firebase Auth · Tailwind UI   │
-└───────────────────────────┬─────────────────────────────┘
-                            │ HTTPS + JWT
-┌───────────────────────────▼─────────────────────────────┐
-│  APPLICATION    Express API · 6 AI Agents (Gemini 3.5)    │
-│                 MCP Server (14 tools) · Deadline Cron     │
-└───────────────────────────┬─────────────────────────────┘
-                            │ MCP Protocol
-┌───────────────────────────▼─────────────────────────────┐
-│  DATA & AI      MongoDB Atlas · Google Agent Platform     │
-│                 Firebase Auth · Gmail SMTP                │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│  PRESENTATION LAYER (Client)                                              │
+│  - React 18 SPA on Vercel · Tailwind CSS · Glassmorphic UI                │
+│  - Firebase Auth (Google OAuth 2.0)                                       │
+└─────────────────────────────────────┬─────────────────────────────────────┘
+                                      │ HTTPS + Verified Bearer JWT
+┌─────────────────────────────────────▼─────────────────────────────────────┐
+│  APPLICATION LAYER (Google Cloud Run / Express Server)                    │
+│  - Firebase Admin Token Verification (req.user.uid)                       │
+│  - 6 AI Agents (Gemini 3.5 Flash via Vertex AI)                           │
+│  - MCP Server (14 Tools) + MCP Client with resilient direct fallback      │
+│  - Google Cloud Secret Manager integration (zero hardcoded keys)          │
+│  - Autonomous Deadline Monitor (node-cron + Nodemailer)                   │
+└───────────────────┬───────────────────────────────────┬───────────────────┘
+                    │ MCP Protocol                      │ Firebase Admin
+┌───────────────────▼───────────────┐   ┌───────────────▼───────────────────┐
+│  MONGODB ATLAS (CAREER DATA STORE)│   │  GOOGLE CLOUD FIRESTORE (JOURNAL) │
+│  - Applications & Match Scores    │   │  - Isolated User Conversations    │
+│  - User Profiles & Parsed Resumes │   │  - AI Reflections & Action Plans  │
+│  - Notification Audit Logs        │   │  - Path: users/{uid}/journalEntries│
+└───────────────────────────────────┘   └───────────────────────────────────┘
 ```
-
+ 
 📐 **Full technical deep-dive:** [ARCHITECTURE.md](ARCHITECTURE.md)
-
+ 
 ---
-
+ 
 ## 🛠️ Tech Stack
-
+ 
 <div align="center">
-
+ 
 | Layer | Technologies |
 |-------|-------------|
-| **AI / Agents** | Google Agent Platform · Vertex AI · Gemini 3.5 Flash · Official MCP SDK |
+| **AI / Reasoning** | Google Agent Platform · Vertex AI · Gemini 3.5 Flash · Official MCP SDK |
 | **Frontend** | React 18 · React Router v6 · Tailwind CSS · Vite · Recharts · Lucide |
-| **Backend** | Node.js · Express · Mongoose · node-cron · Nodemailer |
-| **Data & Auth** | MongoDB Atlas · Firebase Authentication (Google OAuth) |
-| **Hosting** | Vercel (frontend) · Render (backend) — $0/month |
-
+| **Backend** | Node.js (ES Modules) · Express · Mongoose · node-cron · Nodemailer |
+| **Data & Auth** | MongoDB Atlas (Career Records) · Cloud Firestore (Journal) · Firebase Auth |
+| **Security & Secrets** | Google Cloud Secret Manager · UID-Scoped Access · Firebase Admin SDK |
+| **Hosting** | Vercel (frontend) · Google Cloud Run (backend container) — $0/month |
+ 
 </div>
 
 ---
@@ -321,15 +334,15 @@ Open **http://localhost:5173** 🎉
 
 ---
 
-## 🔐 Security
+## 🔐 Security & Cloud Architecture
 
-- ✅ All secrets in `.env` (gitignored)
-- ✅ Firebase Authentication with Google OAuth 2.0
-- ✅ JWT verification on every API call
-- ✅ Per-user data isolation by `userId`
-- ✅ TLS/SSL MongoDB connections
-- ✅ CORS restricted to the frontend domain
-- ✅ Schema validation via Mongoose + Zod
+- ✅ **Google Cloud Secret Manager**: Automated retrieval of production credentials with in-memory caching and zero plaintext secrets.
+- ✅ **Zero-Trust UID Isolation**: Strict server-side verification using Firebase Admin SDK (`req.user.uid`). No client-supplied UIDs accepted.
+- ✅ **Dual Database Security**: MongoDB Atlas queries strictly scoped by `userId`; Firestore journal entries partitioned under `users/{uid}/journalEntries` with matching `firestore.rules`.
+- ✅ **Google Cloud Run Deployment**: Stateless, containerized backend running on Cloud Run with non-root security context and dynamic port binding.
+- ✅ **Firebase Authentication**: Google OAuth 2.0 integration with verified short-lived JWT Bearer tokens on all protected endpoints.
+- ✅ **TLS & Network Isolation**: Full TLS/SSL encryption for MongoDB Atlas, Firestore, and Vertex AI API traffic.
+- ✅ **Strict Input Validation**: Mongoose schemas and Zod validation across all MCP tools and REST endpoints.
 
 ---
 
