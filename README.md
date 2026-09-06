@@ -24,9 +24,9 @@
 
 <br/>
 
-**🏆 Built for the Google Cloud Agent Builder Hackathon · MongoDB Partner Track**
+**🛡️ Secure Personal Gemini Journal Challenge · AI Career Copilot Submission**
 
-`#AIAgents` · `#GoogleAgentPlatform` · `#GeminiAI` · `#MongoDBMCP` · `#MultiAgentSystem` · `#AgenticAI`
+`#PersonalGeminiJournal` · `#GoogleCloudRun` · `#GeminiAI` · `#MongoDBMCP` · `#FirestoreJournal` · `#AgenticAI`
 
 </div>
 
@@ -35,6 +35,7 @@
 ## 🧭 Table of Contents
 
 - [⚡ TL;DR](#-tldr)
+- [🛡️ Secure Personal Gemini Journal Challenge](#️-secure-personal-gemini-journal-challenge)
 - [🎯 The Problem](#-the-problem)
 - [💡 The Solution](#-the-solution)
 - [🤖 Built on Google Agent Platform](#-built-on-google-agent-platform)
@@ -65,6 +66,57 @@
 | 🔒 **Secret Manager & Zero-Trust** | credentials managed securely; strict server-side UID isolation |
 | ⏰ **Autonomous deadline monitor** | runs 24/7, emails you before you miss out |
 | 💸 **$0/month** | runs entirely on free tiers (Google Cloud Run + Vercel) |
+
+---
+
+## 🛡️ Secure Personal Gemini Journal Challenge
+
+This version of OrbitKeeper enhances the autonomous career agent with a **Secure Personal Gemini Journal** layer, integrating Google Cloud Run, Cloud Firestore, and Google Cloud Secret Manager while preserving MongoDB Atlas as the primary system of record for career applications.
+
+### 🌟 What Was Added for This Challenge:
+1. **Cloud Firestore Conversational Journal Layer**:
+   - Conversations with the Career Memory Agent are persisted in Google Cloud Firestore under strictly user-isolated subcollections:
+     ```
+     users/{uid}/journalEntries/{entryId}
+     ```
+   - Each Firestore journal entry records:
+     - `userMessage`: The candidate's query or reflection prompt.
+     - `assistantResponse`: Gemini 3.5 Flash's grounded advice.
+     - `summary`: High-level synthesis of the conversation.
+     - `keyDecision`: Tactical or strategic career decision identified during the turn.
+     - `nextAction`: Concrete, actionable next step for the user to execute.
+     - `sessionId`: Session grouping identifier.
+     - `userId`: Verified Firebase UID.
+     - `createdAt`: Server timestamp (`admin.firestore.FieldValue.serverTimestamp()`).
+
+2. **Original Feature Enhancement: AI Career Reflection / Action Plan**:
+   - Beyond standard conversational assistance, every chat turn automatically produces structured reflection metadata: a **summary**, a **key decision**, and an **actionable next step**.
+   - These are rendered in the React UI as interactive reflection badge pills (💡 **Key Decision** & 🎯 **Next Action**), transforming ephemeral chat into an evolving career journal.
+
+3. **Multi-Turn Grounding with Dual-Store Context Fusion**:
+   - On every turn, the agent fetches the last 10 turns from Cloud Firestore (`getJournalHistory`) to maintain conversational continuity.
+   - It concurrently retrieves active applications, interview statuses, and resume data from **MongoDB Atlas via MCP tools** (`find_documents`, `get_profile`).
+   - Gemini 3.5 Flash fuses past journal reflections with live career telemetry to deliver stateful, hyper-personalized career mentoring.
+   - On page load, the frontend rehydrates the full session history via `GET /api/agent/history`.
+
+4. **Dual Data-Store Architecture (Honest Distinction)**:
+   - **MongoDB Atlas**: Remains the dedicated career-data store for structured applications, match scores, profiles, uploaded resumes, and notification audit logs (accessed via 14 MCP tools). MongoDB is **not** replaced.
+   - **Google Cloud Firestore**: Used exclusively for user-scoped journal conversations and AI reflections (`users/{uid}/journalEntries`).
+
+5. **Production Deployment on Google Cloud Run**:
+   - The Express backend is containerized (`server/Dockerfile`, Node 18-alpine, non-root user `nodejs`) and deployed to **Google Cloud Run** (`orbitkeeper-api` in `us-central1`).
+   - The frontend remains deployed on **Vercel** (`https://orbitkeeper.vercel.app`).
+   - Engineered for zero-downtime startup: binds `0.0.0.0:${PORT}` before connecting to databases, preventing boot timeouts on Cloud Run.
+
+6. **Google Cloud Secret Manager**:
+   - The production MongoDB connection string `MONGODB_URI` is stored securely in **Google Cloud Secret Manager** and injected into Google Cloud Run as a secret-backed environment variable (`MONGODB_URI=MONGODB_URI:latest`), removing plaintext database credentials from environment settings.
+   - The codebase includes [`server/utils/secrets.js`](server/utils/secrets.js) with in-memory caching and local `.env` fallback.
+
+7. **Zero-Trust Security & Google AI Studio Constitution**:
+   - **Zero-Trust Identity**: Authentication uses Firebase Auth (Google OAuth 2.0). All protected endpoints strictly verify Firebase ID tokens server-side using the Firebase Admin SDK. The server extracts `req.user.uid` directly from verified claims; no client-controlled `userId` in parameters or request bodies is ever accepted.
+   - **Hierarchical Path Isolation**: Firestore operations enforce `users/${req.user.uid}/journalEntries`, preventing any cross-user data access.
+   - **Firestore Security Rules**: Protected by [firestore.rules](firestore.rules) enforcing `request.auth.uid == userId`.
+   - **AI Studio Security Constitution**: All agent logic is bound by the security directives in [SYSTEM_INSTRUCTIONS.md](SYSTEM_INSTRUCTIONS.md), governing zero-trust identity, UID isolation, secret hygiene, graceful AI failure (non-blocking reflection persistence), and prompt-injection defenses.
 
 ---
 
@@ -210,31 +262,44 @@ OrbitKeeper is a true **multi-agent architecture** — each agent owns a single 
 ---
  
 ## 🏗️ Architecture at a Glance
- 
+
+```
+Vercel React (Frontend SPA)
+   ↓ Firebase Auth / ID Token (Google OAuth 2.0)
+Cloud Run Express Backend ("orbitkeeper-api", us-central1)
+   ├── MongoDB + MCP → existing career data (applications, profiles, 14 MCP tools)
+   ├── Firestore → user-scoped journal history (users/{uid}/journalEntries)
+   ├── Secret Manager → production secrets (MONGODB_URI secret-backed env var)
+   └── Gemini / Vertex AI (Gemini 3.5 Flash multi-turn reasoning & AI reflection)
+```
+
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐
-│  PRESENTATION LAYER (Client)                                              │
-│  - React 18 SPA on Vercel · Tailwind CSS · Glassmorphic UI                │
-│  - Firebase Auth (Google OAuth 2.0)                                       │
+│  PRESENTATION LAYER (Vercel React)                                        │
+│  - React 18 SPA · Tailwind CSS · Glassmorphic UI                          │
+│  - Firebase Auth SDK (Google OAuth 2.0 Client-Side Flow)                  │
+│  - Rehydrates journal history via GET /api/agent/history                  │
 └─────────────────────────────────────┬─────────────────────────────────────┘
-                                      │ HTTPS + Verified Bearer JWT
+                                      │ HTTPS + Verified Bearer ID Token
 ┌─────────────────────────────────────▼─────────────────────────────────────┐
-│  APPLICATION LAYER (Google Cloud Run / Express Server)                    │
-│  - Firebase Admin Token Verification (req.user.uid)                       │
+│  APPLICATION LAYER (Cloud Run Express Backend: "orbitkeeper-api")         │
+│  - Firebase Admin SDK Token Verification (strict server-side req.user.uid)│
 │  - 6 AI Agents (Gemini 3.5 Flash via Vertex AI)                           │
-│  - MCP Server (14 Tools) + MCP Client with resilient direct fallback      │
-│  - Google Cloud Secret Manager integration (zero hardcoded keys)          │
+│  - MCP Server (14 Tools) + Resilient Client with direct handler fallback  │
+│  - Secret Manager integration (MONGODB_URI mounted as secret env var)     │
 │  - Autonomous Deadline Monitor (node-cron + Nodemailer)                   │
-└───────────────────┬───────────────────────────────────┬───────────────────┘
-                    │ MCP Protocol                      │ Firebase Admin
-┌───────────────────▼───────────────┐   ┌───────────────▼───────────────────┐
-│  MONGODB ATLAS (CAREER DATA STORE)│   │  GOOGLE CLOUD FIRESTORE (JOURNAL) │
-│  - Applications & Match Scores    │   │  - Isolated User Conversations    │
-│  - User Profiles & Parsed Resumes │   │  - AI Reflections & Action Plans  │
-│  - Notification Audit Logs        │   │  - Path: users/{uid}/journalEntries│
-└───────────────────────────────────┘   └───────────────────────────────────┘
+└──────────────┬──────────────────────┬──────────────────────┬──────────────┘
+               │ MCP Protocol         │ Firebase Admin SDK   │ GCP Secret API
+┌──────────────▼──────────┐ ┌─────────▼────────────┐ ┌───────▼──────────────┐
+│ MONGODB ATLAS           │ │ GOOGLE CLOUD         │ │ GOOGLE CLOUD         │
+│ (CAREER DATA STORE)     │ │ FIRESTORE (JOURNAL)  │ │ SECRET MANAGER       │
+│ - Applications & Stats  │ │ - users/{uid}/       │ │ - MONGODB_URI        │
+│ - Profiles & Resumes    │ │   journalEntries     │ │   production secret  │
+│ - Notification Logs     │ │ - AI Reflections     │ │   injected to Cloud  │
+│ (14 MCP Tools)          │ │   (summary/decision) │ │   Run container      │
+└─────────────────────────┘ └──────────────────────┘ └──────────────────────┘
 ```
- 
+
 📐 **Full technical deep-dive:** [ARCHITECTURE.md](ARCHITECTURE.md)
  
 ---
@@ -336,11 +401,12 @@ Open **http://localhost:5173** 🎉
 
 ## 🔐 Security & Cloud Architecture
 
-- ✅ **Google Cloud Secret Manager**: Automated retrieval of production credentials with in-memory caching and zero plaintext secrets.
-- ✅ **Zero-Trust UID Isolation**: Strict server-side verification using Firebase Admin SDK (`req.user.uid`). No client-supplied UIDs accepted.
-- ✅ **Dual Database Security**: MongoDB Atlas queries strictly scoped by `userId`; Firestore journal entries partitioned under `users/{uid}/journalEntries` with matching `firestore.rules`.
-- ✅ **Google Cloud Run Deployment**: Stateless, containerized backend running on Cloud Run with non-root security context and dynamic port binding.
+- ✅ **Google Cloud Secret Manager**: Production database connection string (`MONGODB_URI`) is securely stored in Google Cloud Secret Manager and injected into Cloud Run as a secret-backed environment variable. Application-level caching and graceful fallback provided via `server/utils/secrets.js`.
+- ✅ **Zero-Trust UID Isolation**: Strict server-side verification using Firebase Admin SDK (`req.user.uid`). No client-supplied UIDs in request bodies or query params are trusted.
+- ✅ **Dual Database Security**: MongoDB Atlas queries strictly scoped by verified `userId`; Cloud Firestore journal entries partitioned under `users/{uid}/journalEntries` with matching `firestore.rules`.
+- ✅ **Google Cloud Run Deployment**: Stateless, containerized backend running on Cloud Run (`orbitkeeper-api` in `us-central1`) with non-root security context, instant health-check readiness, and dynamic port binding.
 - ✅ **Firebase Authentication**: Google OAuth 2.0 integration with verified short-lived JWT Bearer tokens on all protected endpoints.
+- ✅ **Google AI Studio Constitution**: Built-in defense directives ([SYSTEM_INSTRUCTIONS.md](SYSTEM_INSTRUCTIONS.md)) governing zero-trust identity, secret hygiene, graceful AI failure handling, and prompt-injection defenses.
 - ✅ **TLS & Network Isolation**: Full TLS/SSL encryption for MongoDB Atlas, Firestore, and Vertex AI API traffic.
 - ✅ **Strict Input Validation**: Mongoose schemas and Zod validation across all MCP tools and REST endpoints.
 
@@ -352,7 +418,7 @@ Open **http://localhost:5173** 🎉
 |--------|-------|
 | 🤖 AI Agents | 6 specialized agents |
 | 🔌 MCP Tools | 14 MongoDB operations |
-| 🧠 Model | Gemini 3.5 Flash (Agent Platform) |
+| 🧠 Model | Gemini 3.5 Flash (Vertex AI) |
 | 👥 Team | 2 developers |
 | 💸 Running cost | $0 / month |
 
@@ -382,10 +448,10 @@ Released under the **MIT License** — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**⭐ Built with Gemini's brain, MongoDB's memory, and Google Agent Platform's muscle.**
+**⭐ Built with Gemini's brain, MongoDB's memory, and Google Cloud Run's serverless muscle.**
 
-_Google Cloud Agent Builder Hackathon · MongoDB Partner Track_
+_Secure Personal Gemini Journal Challenge_
 
-`#GoogleAgentPlatform` · `#GeminiAI` · `#MongoDBMCP` · `#AgenticAI` · `#Hackathon2026`
+`#PersonalGeminiJournal` · `#GoogleCloudRun` · `#GeminiAI` · `#MongoDBMCP` · `#FirestoreJournal` · `#AgenticAI`
 
 </div>

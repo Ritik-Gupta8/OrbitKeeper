@@ -1,33 +1,34 @@
 # 🏗️ OrbitKeeper Architecture
 
-**Technical Deep Dive & Future Roadmap**
+**Technical Deep Dive & System Architecture**
 
-> Built on **Google Agent Platform** (Google Cloud's enterprise agent stack, formerly Vertex AI) with **Gemini 3.5 Flash** and a custom **MongoDB MCP server**.
+> Built on **Google Agent Platform** (Vertex AI) with **Gemini 3.5 Flash**, **Google Cloud Run**, **Google Cloud Firestore**, **Google Cloud Secret Manager**, and a custom **MongoDB MCP server**.
 
 ---
 
 ## Table of Contents
 
 1. [Google Agent Platform Integration](#google-agent-platform-integration)
-2. [System Overview](#system-overview)
-3. [Architecture Layers](#architecture-layers)
-4. [Data Flow Diagrams](#data-flow-diagrams)
-5. [MCP Integration](#mcp-integration)
-6. [AI Agent System](#ai-agent-system)
-7. [Authentication & Security](#authentication--security)
-8. [Database Schema](#database-schema)
-9. [API Endpoints](#api-endpoints)
-10. [Deployment Architecture](#deployment-architecture)
-11. [Performance & Scalability](#performance--scalability)
-12. [Future Enhancements](#future-enhancements)
-13. [Known Limitations](#known-limitations)
-14. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
+2. [Secure Personal Gemini Journal Challenge](#secure-personal-gemini-journal-challenge)
+3. [System Overview](#system-overview)
+4. [Architecture Layers](#architecture-layers)
+5. [Data Flow Diagrams](#data-flow-diagrams)
+6. [MCP Integration](#mcp-integration)
+7. [AI Agent System & Career Reflection Journal](#ai-agent-system--career-reflection-journal)
+8. [Authentication & Security](#authentication--security)
+9. [Database Schema (MongoDB Atlas & Google Cloud Firestore)](#database-schema-mongodb-atlas--google-cloud-firestore)
+10. [API Endpoints](#api-endpoints)
+11. [Deployment Architecture (Google Cloud Run & Vercel)](#deployment-architecture-google-cloud-run--vercel)
+12. [Performance & Scalability](#performance--scalability)
+13. [Future Enhancements](#future-enhancements)
+14. [Known Limitations](#known-limitations)
+15. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
 
 ---
 
 ## Google Agent Platform Integration
 
-OrbitKeeper is built on **Google Agent Platform** — Google Cloud's enterprise platform for building and running AI agents (the platform formerly known as Vertex AI). Every piece of reasoning in OrbitKeeper is powered by **Gemini 3.5 Flash**, served through the Agent Platform's Vertex AI inference layer and orchestrated as a coordinated multi-agent system.
+OrbitKeeper is built on **Google Agent Platform** — Google Cloud's enterprise platform for building and running AI agents (Vertex AI). Every piece of reasoning in OrbitKeeper is powered by **Gemini 3.5 Flash**, served through the Agent Platform's Vertex AI inference layer and orchestrated as a coordinated multi-agent system.
 
 **Mapping OrbitKeeper to the Agent Platform building blocks:**
 
@@ -36,10 +37,41 @@ OrbitKeeper is built on **Google Agent Platform** — Google Cloud's enterprise 
 | **Models** (Gemini) | Gemini 3.5 Flash for all reasoning, planning, and generation |
 | **Agents** (multi-agent orchestration) | 6 specialized agents coordinated through a controller pipeline |
 | **MCP Servers** (external capabilities) | A custom MongoDB MCP server exposing 14 tools |
-| **Memory** (long-term context) | Persistent career memory stored in MongoDB Atlas |
+| **Memory** (long-term context) | Persistent career memory in MongoDB Atlas + Conversational Journal in Firestore |
 | **Tools** (function calling) | Standardized, schema-validated tool calls via the official MCP SDK |
 
 The agents do more than chat — they **reason, plan, invoke tools, and execute tasks** under user oversight. This agentic loop (perceive → reason → act via tools → observe) is exactly what the Agent Platform is designed to run.
+
+---
+
+## Secure Personal Gemini Journal Challenge
+
+This edition of OrbitKeeper introduces the **Secure Personal Gemini Journal** layer, upgrading the copilot into an introspective, stateful, and secure career companion:
+
+```
+Vercel React
+   ↓ Firebase Auth / ID Token
+Cloud Run Express Backend
+   ├── MongoDB + MCP → existing career data
+   ├── Firestore → user-scoped journal history
+   ├── Secret Manager → production secrets
+   └── Gemini / Vertex AI
+```
+
+### Key Challenge Implementations:
+1. **Cloud Firestore Journal Layer**: User conversations are stored under hierarchical paths:
+   ```
+   users/{uid}/journalEntries/{entryId}
+   ```
+   Each entry contains: `userMessage`, `assistantResponse`, `summary`, `keyDecision`, `nextAction`, `sessionId`, `userId`, and `createdAt` server timestamp.
+2. **Original Feature Enhancement: AI Career Reflection / Action Plan**: Every conversation automatically generates structured takeaway metadata (`summary`, `keyDecision`, `nextAction`), rendered dynamically in the UI as interactive reflection pills.
+3. **Dual Data-Store Architecture**:
+   - **MongoDB Atlas**: Retains all structured career application records, company tracking, resume extractions, and notification logs via 14 MCP tools. MongoDB was **not** replaced.
+   - **Google Cloud Firestore**: Serves exclusively as the conversational memory and journal storage layer.
+4. **Multi-Turn Context Fusion**: Fetches the last 10 Firestore journal turns and fuses them with active MongoDB application statuses before querying Gemini 3.5 Flash.
+5. **Google Cloud Secret Manager**: Production database connection string (`MONGODB_URI`) is stored in Secret Manager and injected into Cloud Run as a secret-backed environment variable (`MONGODB_URI=MONGODB_URI:latest`).
+6. **Zero-Trust Security & AI Studio Constitution**: All endpoints verify Firebase ID tokens server-side (`req.user.uid`), matching `firestore.rules` (`request.auth.uid == userId`), and enforce the security constitution in [SYSTEM_INSTRUCTIONS.md](SYSTEM_INSTRUCTIONS.md).
+7. **Cloud Run Production Deployment**: Backend deployed as a containerized microservice on Google Cloud Run (`orbitkeeper-api` in `us-central1`), with the frontend on Vercel.
 
 ---
 
@@ -51,29 +83,41 @@ OrbitKeeper follows a **3-tier cloud-native architecture** running on **Google C
 - **Google Cloud Firestore**: Serves as the user-isolated conversational memory layer and Personal Gemini Journal (`users/{uid}/journalEntries`), storing chat history, context-grounded summaries, and AI career reflections.
 
 ```
+Vercel React (Frontend SPA)
+   ↓ Firebase Auth / ID Token (Google OAuth 2.0)
+Cloud Run Express Backend ("orbitkeeper-api", us-central1)
+   ├── MongoDB + MCP → existing career data (applications, profiles, 14 MCP tools)
+   ├── Firestore → user-scoped journal history (users/{uid}/journalEntries)
+   ├── Secret Manager → production secrets (MONGODB_URI secret-backed env var)
+   └── Gemini / Vertex AI (Gemini 3.5 Flash multi-turn reasoning & AI reflection)
+```
+
+```
 ┌───────────────────────────────────────────────────────────────────────────┐
 │  PRESENTATION LAYER (Client - Vercel)                                     │
 │  - React 18 SPA · Tailwind CSS · Glassmorphic UI                          │
 │  - Firebase Auth SDK (Google OAuth 2.0 Client-Side Flow)                  │
+│  - Rehydrates journal history via GET /api/agent/history                  │
 └─────────────────────────────────────┬─────────────────────────────────────┘
-                                      │ HTTPS + Verified Bearer JWT
+                                      │ HTTPS + Verified Bearer ID Token
 ┌─────────────────────────────────────▼─────────────────────────────────────┐
 │  APPLICATION LAYER (Google Cloud Run - "orbitkeeper-api")                  │
 │  - Express REST API (Node.js ES Modules, Containerized)                   │
 │  - Firebase Admin SDK Token Verification (Strict req.user.uid)            │
-│  - Google Cloud Secret Manager (Dynamic credential loading & caching)     │
+│  - Google Cloud Secret Manager (MONGODB_URI secret-backed environment var)│
 │  - 6 AI Agents (Gemini 3.5 Flash via Vertex AI)                           │
 │  - MCP Server (14 Tools) + Resilient MCP Client with Direct Fallback       │
 │  - Autonomous Deadline Monitor (node-cron + Nodemailer)                   │
-└───────────────────┬───────────────────────────────────┬───────────────────┘
-                    │ MCP Protocol                      │ Firebase Admin SDK
-┌───────────────────▼───────────────┐   ┌───────────────▼───────────────────┐
-│  MONGODB ATLAS (CAREER STORE)     │   │  GOOGLE CLOUD FIRESTORE (JOURNAL) │
-│  - Applications & Match Scores    │   │  - User-Isolated Conversations    │
-│  - Profiles & Parsed Resumes      │   │  - AI Reflections (Takeaways/Next)│
-│  - Notification Audit Logs        │   │  - Path: users/{uid}/journalEntries│
-│  (Interfaced via 14 MCP Tools)    │   │  (Strict UID-partitioned storage) │
-└───────────────────────────────────┘   └───────────────────────────────────┘
+└──────────────┬──────────────────────┬──────────────────────┬──────────────┘
+               │ MCP Protocol         │ Firebase Admin SDK   │ GCP Secret API
+┌──────────────▼──────────┐ ┌─────────▼────────────┐ ┌───────▼──────────────┐
+│ MONGODB ATLAS           │ │ GOOGLE CLOUD         │ │ GOOGLE CLOUD         │
+│ (CAREER DATA STORE)     │ │ FIRESTORE (JOURNAL)  │ │ SECRET MANAGER       │
+│ - Applications & Stats  │ │ - users/{uid}/       │ │ - MONGODB_URI        │
+│ - Profiles & Resumes    │ │   journalEntries     │ │   production secret  │
+│ - Notification Logs     │ │ - AI Reflections     │ │   injected to Cloud  │
+│ (14 MCP Tools)          │ │   (summary/decision) │ │   Run container      │
+└─────────────────────────┘ └──────────────────────┘ └──────────────────────┘
 ```
 
 
@@ -701,11 +745,19 @@ The frontend dynamically displays the structured reflection below the assistant'
   4. **Database Rules**: `firestore.rules` enforces that direct client connections cannot read or write to paths belonging to another UID.
 
 #### 2. Google Cloud Secret Manager
-- **Elimination of Plaintext Secrets**: In production, sensitive configuration values (such as `MONGODB_URI`, `FIREBASE_PRIVATE_KEY`, and SMTP credentials) are retrieved directly from GCP Secret Manager via `server/utils/secrets.js`.
-- **In-Memory Caching**: Secrets are fetched asynchronously and cached in a local process dictionary (`cachedSecrets`), eliminating redundant network round-trips while keeping credentials out of `.env` files in deployed containers.
+- **Production Secret Injection**: The production database connection string (`MONGODB_URI`) is stored in Google Cloud Secret Manager and injected into Google Cloud Run as a secret-backed environment variable (`MONGODB_URI=MONGODB_URI:latest`).
+- **Codebase Secret Utility (`server/utils/secrets.js`)**: Integrates `@google-cloud/secret-manager` (`SecretManagerServiceClient`) with in-memory caching to prevent recurrent network round-trips while keeping credentials out of plaintext git commits or container images.
 - **Graceful Local Fallback**: In local development (`NODE_ENV !== 'production'`), the utility automatically falls back to local `.env` variables without requiring local GCP credentials.
 
-#### 3. Network & Transport Security
+#### 3. Google AI Studio Constitution & Prompt Defense
+- **Security Constitution ([SYSTEM_INSTRUCTIONS.md](SYSTEM_INSTRUCTIONS.md))**: The system prompt enforces strict enterprise-grade guardrails:
+  1. **Zero-Trust Identity**: Prohibits trusting client-supplied identifiers; mandates server-side verified Firebase claims.
+  2. **Multi-Tenant UID Partitioning**: Enforces strict `users/{uid}/...` document hierarchies and MongoDB `{ userId }` filters.
+  3. **Secret Hygiene**: Strictly prohibits hardcoded tokens, logging of sensitive data, or exposure in API responses.
+  4. **Graceful AI Failure**: All secondary AI tasks (such as journal saving or reflection extraction) are wrapped in isolated try/catch handlers so transient quota limits or network blips never crash or block the primary user conversation.
+  5. **Prompt-Injection Defense**: Delimits all user context clearly, sanitizes output payloads, and validates JSON schemas before persistence.
+
+#### 4. Network & Transport Security
 - **Strict HTTPS / TLS**: All traffic between the Vercel frontend, Cloud Run backend, MongoDB Atlas, and Vertex AI is encrypted in transit using TLS 1.3.
 - **CORS Allowlist**: Express CORS middleware restricts requests strictly to the production frontend domain (`https://orbitkeeper.vercel.app`) and `localhost:5173` during development.
 - **Payload Validation**: Mongoose schemas enforce data types and lengths, while Zod schemas validate all MCP tool arguments before execution.
