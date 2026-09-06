@@ -1,0 +1,10 @@
+node_modules
+.env
+.env*
+service-account-key.json
+*.key
+*.pem
+.temp-service-account.json
+npm-debug.log*
+.git
+.vscode
