@@ -2,29 +2,50 @@
 
 **Technical Deep Dive & Future Roadmap**
 
+> Built on **Google Agent Platform** (Google Cloud's enterprise agent stack, formerly Vertex AI) with **Gemini 3.5 Flash** and a custom **MongoDB MCP server**.
+
 ---
 
 ## Table of Contents
 
-1. [System Overview](#system-overview)
-2. [Architecture Layers](#architecture-layers)
-3. [Data Flow Diagrams](#data-flow-diagrams)
-4. [MCP Integration](#mcp-integration)
-5. [AI Agent System](#ai-agent-system)
-6. [Authentication & Security](#authentication--security)
-7. [Database Schema](#database-schema)
-8. [API Endpoints](#api-endpoints)
-9. [Deployment Architecture](#deployment-architecture)
-10. [Performance & Scalability](#performance--scalability)
-11. [Future Enhancements](#future-enhancements)
-12. [Known Limitations](#known-limitations)
-13. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
+1. [Google Agent Platform Integration](#google-agent-platform-integration)
+2. [System Overview](#system-overview)
+3. [Architecture Layers](#architecture-layers)
+4. [Data Flow Diagrams](#data-flow-diagrams)
+5. [MCP Integration](#mcp-integration)
+6. [AI Agent System](#ai-agent-system)
+7. [Authentication & Security](#authentication--security)
+8. [Database Schema](#database-schema)
+9. [API Endpoints](#api-endpoints)
+10. [Deployment Architecture](#deployment-architecture)
+11. [Performance & Scalability](#performance--scalability)
+12. [Future Enhancements](#future-enhancements)
+13. [Known Limitations](#known-limitations)
+14. [MongoDB IP Whitelist Setup](#mongodb-ip-whitelist-setup)
+
+---
+
+## Google Agent Platform Integration
+
+OrbitKeeper is built on **Google Agent Platform** — Google Cloud's enterprise platform for building and running AI agents (the platform formerly known as Vertex AI). Every piece of reasoning in OrbitKeeper is powered by **Gemini 3.5 Flash**, served through the Agent Platform's Vertex AI inference layer and orchestrated as a coordinated multi-agent system.
+
+**Mapping OrbitKeeper to the Agent Platform building blocks:**
+
+| Agent Platform Capability | OrbitKeeper Implementation |
+|---------------------------|----------------------------|
+| **Models** (Gemini) | Gemini 3.5 Flash for all reasoning, planning, and generation |
+| **Agents** (multi-agent orchestration) | 6 specialized agents coordinated through a controller pipeline |
+| **MCP Servers** (external capabilities) | A custom MongoDB MCP server exposing 14 tools |
+| **Memory** (long-term context) | Persistent career memory stored in MongoDB Atlas |
+| **Tools** (function calling) | Standardized, schema-validated tool calls via the official MCP SDK |
+
+The agents do more than chat — they **reason, plan, invoke tools, and execute tasks** under user oversight. This agentic loop (perceive → reason → act via tools → observe) is exactly what the Agent Platform is designed to run.
 
 ---
 
 ## System Overview
 
-OrbitKeeper follows a **3-tier architecture**:
+OrbitKeeper follows a **3-tier architecture** running on **Google Agent Platform**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -44,10 +65,10 @@ OrbitKeeper follows a **3-tier architecture**:
 └────────────────────┬────────────────────────────────────┘
                      │ MCP Protocol
 ┌────────────────────▼────────────────────────────────────┐
-│  DATA LAYER                                             │
+│  DATA & AI LAYER                                        │
 │  - MongoDB Atlas (Primary Database)                     │
 │  - Firebase Auth (User Management)                      │
-│  - Google Cloud Vertex AI (AI Models)                   │
+│  - Google Agent Platform / Vertex AI (Gemini models)    │
 │  - Gmail SMTP (Email Delivery)                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -132,9 +153,9 @@ server/
 - **Admin SDK**: Server-side verification
 - **Security**: User-specific data isolation
 
-**3. Google Cloud Vertex AI**:
+**3. Google Agent Platform (Vertex AI)**:
 - **Model**: Gemini 3.5 Flash
-- **Region**: us-central1
+- **Endpoint**: global (Gemini 3 family is served on the global endpoint)
 - **Authentication**: Service account JSON
 - **Rate Limits**: Standard enterprise tier
 
@@ -779,8 +800,8 @@ server/
 └──┬──────────┬──────────┬──────────┬─────────────────────┘
    │          │          │          │
    ▼          ▼          ▼          ▼
-MongoDB   Vertex AI  Firebase   Gmail
-Atlas                  Auth       SMTP
+MongoDB   Agent      Firebase   Gmail
+Atlas     Platform   Auth       SMTP
 ```
 
 ### Environment Variables
@@ -875,281 +896,6 @@ Atlas                  Auth       SMTP
 
 ---
 
-## Future Enhancements
-
-### Phase 1: Core Improvements (High Priority)
-
-**1. Application Status Editing** ⭐ PRIORITY
-- **Problem**: Status can only be set when creating application, no edit option afterward
-- **Solution**: Add status dropdown in ApplicationDetail page
-- **Effort**: 30 minutes
-- **Impact**: Critical for tracking application progress
-
-**2. Analytics Dashboard**
-- Visual charts: Applications by status (pie chart)
-- Match score trends over time (line graph)
-- Deadline timeline view
-- Average response time per company
-- Success rate metrics
-
-**3. Bulk Operations**
-- Select multiple applications
-- Bulk status updates
-- Bulk delete
-- Export to CSV/PDF
-
-**4. Browser Extension**
-- Auto-fill application form from job posting URL
-- One-click save from LinkedIn/Indeed
-- Quick add without opening full app
-
-
-### Phase 2: Advanced AI Features (Medium Priority)
-
-**1. Company Research Agent**
-- Scrape company website, Glassdoor, LinkedIn
-- Summarize: Culture, interview process, employee reviews
-- Identify: Key decision makers, recent news
-
-**2. Resume Tailoring**
-- Auto-generate customized resume for each job
-- Highlight relevant projects and skills
-- Suggest wording improvements
-- Export as PDF
-
-**3. Mock Interview Agent**
-- Voice-based practice interviews
-- Real-time feedback on answers
-- Follow-up questions based on responses
-- Record and transcribe sessions
-
-**4. Network Mapping**
-- Find connections at target companies
-- LinkedIn integration
-- Referral request templates
-- Track networking interactions
-
-### Phase 3: Enterprise Features (Low Priority)
-
-**1. Team Collaboration**
-- Share applications with mentors/advisors
-- Commenting system
-- Permission levels
-- University career center integration
-
-**2. Mobile Apps**
-- iOS and Android native apps
-- Push notifications for deadlines
-- Quick status updates
-- Resume upload from phone camera
-
-**3. Public API**
-- RESTful API for integrations
-- Webhooks for status changes
-- OAuth for third-party apps
-- Rate limiting and usage tracking
-
-
-### Phase 4: Machine Learning (Future)
-
-**1. Predictive Analytics**
-- Predict offer probability based on match score
-- Estimate interview likelihood
-- Recommend optimal application time
-- Identify high-conversion companies
-
-**2. Voice Agent**
-- Voice commands for adding applications
-- Spoken interview practice
-- Daily briefing of upcoming deadlines
-- Natural language queries
-
-**3. Video Interview Analysis**
-- Record practice interviews
-- Analyze: Body language, speech patterns, filler words
-- Provide actionable feedback
-- Compare to successful interview patterns
-
----
-
-## Known Limitations
-
-### Current Issues
-
-**1. Status Editing** ⭐ HIGH PRIORITY
-- **Issue**: Cannot edit application status after creation
-- **Impact**: Users must delete and recreate to change status
-- **Workaround**: Manual tracking in notes field
-- **Fix**: Add status dropdown in ApplicationDetail.jsx
-- **Effort**: 30 minutes
-
-**2. Basic UI**
-- No charts or visualizations yet
-- No drag-and-drop file upload
-- Limited animation and transitions
-
-**3. Email Rate Limits**
-- Gmail free tier: 500 emails/day
-- May hit limit with many users
-- **Solution**: Upgrade to SendGrid or AWS SES
-
-**4. Cold Starts**
-- Render free tier sleeps after 15 minutes
-- First request after sleep takes ~30s
-- **Solution**: Use uptime monitor or upgrade to paid tier
-
-**5. No Real-Time Updates**
-- Deadline monitor runs every 2 minutes (cron job)
-- UI doesn't auto-refresh when data changes
-- **Solution**: Add WebSocket support or polling
-
-
-**6. Sequential AI Calls**
-- Gemini API calls run sequentially in analysis pipeline
-- Total time: 10-15 seconds
-- **Solution**: Parallelize with Promise.all (could reduce to 5-7s)
-
-**7. No Offline Support**
-- Requires internet connection
-- No PWA features
-- **Solution**: Add service worker and IndexedDB caching
-
-**8. Limited Search**
-- Basic search in applications
-- No filters or advanced queries
-- **Solution**: Add filter sidebar with multi-criteria search
-
-**9. No File Attachments**
-- Can't attach cover letters, transcripts
-- Only resume upload supported
-- **Solution**: Add multi-file upload with Firebase Storage
-
-**10. No Internationalization**
-- English only
-- US date formats
-- **Solution**: Add i18n support for multiple languages
-
----
-
-## MongoDB IP Whitelist Setup
-
-### Problem
-
-MongoDB Atlas restricts connections to whitelisted IP addresses by default. If you connect from different networks (home WiFi, coffee shop, campus), you'll see:
-
-```
-MongoServerError: IP address not registered
-```
-
-This happens because your IP address changes with each network, and Atlas blocks unrecognized IPs for security.
-
-### Solution: Allow Access from Anywhere
-
-**Steps to whitelist all IP addresses**:
-
-1. **Go to MongoDB Atlas**:
-   - Open: https://cloud.mongodb.com
-   - Log in to your account
-   - Select your project (OrbitKeeper)
-
-2. **Navigate to Network Access**:
-   - Click **"Network Access"** in the left sidebar
-   - (or go to: Security → Network Access)
-
-
-3. **Add IP Address**:
-   - Click **"+ ADD IP ADDRESS"** button
-   - You'll see a dialog with two options
-
-4. **Select "Allow Access from Anywhere"**:
-   - Click the **"ALLOW ACCESS FROM ANYWHERE"** button
-   - This automatically enters `0.0.0.0/0` in the IP address field
-   - This means: Any IP address can connect
-
-5. **Add Comment** (optional but recommended):
-   - In the "Comment" field, type: `Development - All Networks`
-   - Helps identify this rule later
-
-6. **Confirm**:
-   - Click **"Confirm"** button
-   - Wait 1-2 minutes for changes to propagate
-
-7. **Verify**:
-   - Go back to your app
-   - Try connecting to MongoDB
-   - Should work from any network now ✅
-
-### Visual Guide
-
-```
-MongoDB Atlas Dashboard
-├─> Network Access (left sidebar)
-    ├─> Click "+ ADD IP ADDRESS"
-    │
-    ├─> Modal appears with two options:
-    │   ├─> "Add Current IP Address" (your current IP only)
-    │   └─> "ALLOW ACCESS FROM ANYWHERE" ← Click this
-    │
-    ├─> IP Address field shows: 0.0.0.0/0
-    ├─> Comment field: "Development - All Networks"
-    ├─> Click "Confirm"
-    │
-    └─> Wait 1-2 minutes for propagation
-```
-
-### What Does `0.0.0.0/0` Mean?
-
-- **`0.0.0.0/0`**: CIDR notation for "all IPv4 addresses"
-- Allows connections from any IP address globally
-- Useful for development when you work from different locations
-- Your database is still protected by username/password authentication
-
-
-### Security Considerations
-
-**Is "Allow Access from Anywhere" secure?**
-
-✅ **Yes, for development and small projects**:
-- Your database is still protected by username and password
-- Connection string is never exposed (in .env file)
-- Only people with your connection string can connect
-- Similar to how most MongoDB tutorials and free-tier projects work
-
-⚠️ **For production (optional)**:
-- Consider restricting to specific IPs
-- Use MongoDB Atlas IP access lists
-- For deployed apps: Whitelist only Render's IP ranges
-- For local dev: Keep `0.0.0.0/0` for convenience
-
-### Alternative: Add Current IP Only (Not Recommended for Development)
-
-If you prefer to manually add each network:
-
-1. Click **"+ ADD IP ADDRESS"**
-2. Click **"Add Current IP Address"** (adds your current IP only)
-3. Repeat this process every time you change networks
-
-**Downside**: You'll need to do this every time you connect from:
-- Home WiFi
-- Coffee shop
-- Campus
-- Mobile hotspot
-- Friend's house
-
-This is why most developers use `0.0.0.0/0` for development.
-
-### Troubleshooting
-
-**Still getting "IP not registered" error after adding 0.0.0.0/0?**
-
-1. **Wait 2 minutes**: Changes take time to propagate
-2. **Check Network Access page**: Verify `0.0.0.0/0` is listed with ✅ green checkmark
-3. **Restart your server**: Kill and restart `npm run dev`
-4. **Check connection string**: Ensure password is URL-encoded (`@` becomes `%40`)
-5. **Check MongoDB status**: Visit status.mongodb.com for outages
-
----
-
 ## Summary
 
 OrbitKeeper is a production-ready AI career agent with:
@@ -1161,5 +907,4 @@ OrbitKeeper is a production-ready AI career agent with:
 - ✅ Scalable deployment on free tiers (Vercel + Render)
 - ✅ Comprehensive documentation and future roadmap
 
-**Ready for hackathon submission and real-world use!** 🚀
 
