@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Bot, User } from 'lucide-react';
-import { askCopilot } from '../lib/api.js';
+import { Send, Loader2, Bot, User, Sparkles, CheckCircle2, BookOpen } from 'lucide-react';
+import { askCopilot, getJournalHistory } from '../lib/api.js';
 
 const STARTER_PROMPTS = [
   "What should I revise for tomorrow's interview?",
@@ -15,13 +15,50 @@ export default function CopilotChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm your OrbitKeeper AI 🤖\n\nI have access to all your applications, match scores, skill gaps, and interview notes. Ask me anything about your career journey.",
+      content: "Hi! I'm your OrbitKeeper AI 🤖\n\nI have access to your career records and your secure personal journal in Firestore. Ask me anything about your career journey.",
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Rehydrate conversation history from Firestore
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const res = await getJournalHistory(15);
+        const entries = res.data?.data || [];
+        if (entries.length > 0) {
+          const formatted = [];
+          // Oldest first for chat timeline
+          [...entries].reverse().forEach(entry => {
+            formatted.push({
+              role: 'user',
+              content: entry.userMessage,
+            });
+            formatted.push({
+              role: 'assistant',
+              content: entry.assistantResponse,
+              reflection: entry.summary ? {
+                summary: entry.summary,
+                keyDecision: entry.keyDecision,
+                nextAction: entry.nextAction,
+              } : null,
+            });
+          });
+          setMessages(formatted);
+        }
+      } catch (err) {
+        console.warn('Could not load journal history:', err.message);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,13 +72,22 @@ export default function CopilotChat() {
     setLoading(true);
     try {
       const res = await askCopilot(q);
-      setMessages(m => [...m, { role: 'assistant', content: res.data.data.answer }]);
+      const answerData = res.data?.data;
+      setMessages(m => [
+        ...m,
+        {
+          role: 'assistant',
+          content: answerData.answer,
+          reflection: answerData.reflection,
+        },
+      ]);
     } catch (e) {
       setMessages(m => [...m, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="relative flex flex-col h-full max-w-2xl mx-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
@@ -58,11 +104,12 @@ export default function CopilotChat() {
         </div>
         <div>
           <h1 className="text-base font-bold">
-            <span className="ok-gradient-text">AI Career Copilot</span>
+            <span className="ok-gradient-text">Personal Career Journal & Copilot</span>
           </h1>
-          <p className="text-xs text-zinc-500">Powered by Gemini · Has access to your career data</p>
+          <p className="text-xs text-zinc-500">Powered by Gemini · User-Isolated Firestore Journal</p>
         </div>
       </div>
+
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 space-y-4">
@@ -82,9 +129,26 @@ export default function CopilotChat() {
                 : 'bg-zinc-800 text-zinc-200 rounded-tl-sm'
             }`}>
               <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+
+              {msg.role === 'assistant' && msg.reflection?.summary && (
+                <div className="mt-3 pt-2.5 border-t border-zinc-700/60 text-xs">
+                  <div className="flex items-center gap-1.5 text-indigo-400 font-medium mb-1">
+                    <Sparkles size={12} />
+                    <span>Journal Reflection</span>
+                  </div>
+                  <p className="text-zinc-300 italic">{msg.reflection.summary}</p>
+                  {msg.reflection.nextAction && (
+                    <div className="mt-1.5 flex items-start gap-1.5 text-emerald-400/90 font-sans">
+                      <CheckCircle2 size={12} className="mt-0.5 flex-shrink-0" />
+                      <span>{msg.reflection.nextAction}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
+
 
         {loading && (
           <div className="flex gap-3 ok-animate-fade-up">
